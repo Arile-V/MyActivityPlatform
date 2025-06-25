@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: platform
+  datasource:
+    url: jdbc:postgresql://localhost:5432/platform
+    username: root
+    password: 951628437q
+  data:
+    redis:
+      port: 6379
+      host: localhost
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 16
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+          timeout: 3000ms
+  mail:
+    default-encoding: utf-8
+    host: stmp.163.com
+    username: arileverlika@163.com
+    password: JU2YhPt565aVwV8k
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            enable: true
+          stattls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+logging:
+  level:
+    root: info
+    com.activity: debug
