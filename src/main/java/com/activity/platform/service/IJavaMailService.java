@@ -1,6 +1,6 @@
 package com.activity.platform.service;
 
-import com.activity.platform.pojo.Notification;
+import com.activity.platform.pojo.inner.Notification;
 import jakarta.mail.MessagingException;
 
 public interface IJavaMailService {

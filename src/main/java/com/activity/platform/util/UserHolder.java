@@ -12,6 +12,10 @@ public class UserHolder {
         return userThreadLocal.get();
     }
 
+    public static boolean exists() {
+        return userThreadLocal.get() != null;
+    }
+
     public static void remove() {
         userThreadLocal.remove();
     }

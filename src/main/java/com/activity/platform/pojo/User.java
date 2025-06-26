@@ -14,7 +14,7 @@ public class User {
 
     private String username;
     private String email;
-    private Timestamp createtime;
+    private Timestamp createTime;
     private Long workingHours;
     private String schoolID;
     private String name;
