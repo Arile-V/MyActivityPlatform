@@ -11,8 +11,11 @@ import java.sql.Timestamp;
 public class User {
     @TableId
     private Long id;
+
     private String username;
     private String email;
     private Timestamp createtime;
     private Long workingHours;
+    private String schoolID;
+    private String name;
 }

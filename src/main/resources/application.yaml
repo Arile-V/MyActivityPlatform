@@ -26,6 +26,9 @@ spring:
     properties:
       mail:
         smtp:
+          socketFactory:
+            port: 465
+            class: com.activity.platform.util.MailSSLSocketFactory
           auth: true
           starttls:
             enable: true
