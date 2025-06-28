@@ -35,12 +35,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public Result sentCode(String username) throws MessagingException {
         String code = EmailCode.randomCode();
-        if(query().eq("username",username).one()==null){
+        User user = query().eq("username",username).one();
+        if(user==null){
             return Result.fail("用户不存在");
         }
-        if(stringRedisTemplate.opsForValue().setIfAbsent("loginForm:"+username,code, 60*5, TimeUnit.SECONDS)){
-            javaMailService.sendEmailCode(code);
-            return Result.ok("发送成功");
+        if(Boolean.TRUE.equals(stringRedisTemplate.opsForValue()
+                .setIfAbsent("loginForm:" + username, code, 60 * 5, TimeUnit.SECONDS))){
+            if(javaMailService.sendEmailCode(user.getEmail(),code)){
+                return Result.ok("发送成功");
+            }else{
+                return Result.fail("请勿频繁发送验证码");
+            }
         }else{
             return Result.fail("请勿频繁发送验证码");
         }

@@ -11,7 +11,7 @@ public interface IJavaMailService {
      * @return 执行结果 0：失败1：成功
      * @throws MessagingException
      */
-    Integer sendEmailCode(String email) throws MessagingException;
+    Boolean sendEmailCode(String email,String code) throws MessagingException;
 
     /**
      * 发送下消息通知

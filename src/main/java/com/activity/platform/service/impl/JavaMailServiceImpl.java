@@ -2,12 +2,15 @@ package com.activity.platform.service.impl;
 
 import com.activity.platform.pojo.inner.Notification;
 import com.activity.platform.service.IJavaMailService;
+import com.activity.platform.util.EmailCode;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class JavaMailServiceImpl implements IJavaMailService {
@@ -22,8 +25,17 @@ public class JavaMailServiceImpl implements IJavaMailService {
     }
 
     @Override
-    public Integer sendEmailCode(String email) throws MessagingException {
-        return null;
+    public Boolean sendEmailCode(String to,String code) throws MessagingException {
+        if(Boolean.TRUE.equals(stringRedisTemplate.opsForValue()
+                .setIfAbsent(
+                        "email:tryLogin:wait:" + to, String.valueOf(System.currentTimeMillis()), 1, TimeUnit.MINUTES))){
+            sendEmail(to, "验证码", code);
+            //只接受最新验证码
+            stringRedisTemplate.opsForValue().set("email:tryLogin:"+to, code, 5, TimeUnit.MINUTES);
+            return true;
+        } else{
+            return false;
+        }
     }
 
     @Override
@@ -33,6 +45,7 @@ public class JavaMailServiceImpl implements IJavaMailService {
 
     private void sendEmail(String to, String subject, String content) throws MessagingException {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom("arileverlika@163.com");
         message.setTo(to);
         message.setSubject(subject);
         message.setText(content);

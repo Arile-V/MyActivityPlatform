@@ -1,3 +1,5 @@
+server:
+  port: 8080
 spring:
   application:
     name: platform
@@ -19,22 +21,20 @@ spring:
           timeout: 3000ms
   mail:
     default-encoding: utf-8
-    host: stmp.163.com
+    host: smtp.163.com
     username: arileverlika@163.com
-    password: JU2YhPt565aVwV8k
+    password: LPxheJfU97XbcckX
     protocol: smtp
     properties:
       mail:
         smtp:
           socketFactory:
             port: 465
-            class: com.activity.platform.util.MailSSLSocketFactory
+            class: jakarta.mail.ssl.SSLSocketFactory
           auth: true
           starttls:
             enable: true
           ssl:
-            enable: true
-          stattls:
             enable: true
           connectiontimeout: 5000
           timeout: 3000
@@ -44,3 +44,6 @@ logging:
   level:
     root: info
     com.activity: debug
+mybatis-plus:
+  type-aliases-package: com.activity.platform.pojo
+  mapper-locations: classpath:mapper/*.xml
