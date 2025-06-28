@@ -4,8 +4,8 @@ spring:
   application:
     name: platform
   datasource:
-    url: jdbc:postgresql://localhost:5432/platform
-    username: root
+    url: jdbc:postgresql://localhost:5433/platform
+    username: postgres
     password: 951628437q
   data:
     redis:

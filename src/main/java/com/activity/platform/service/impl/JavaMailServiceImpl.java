@@ -30,8 +30,6 @@ public class JavaMailServiceImpl implements IJavaMailService {
                 .setIfAbsent(
                         "email:tryLogin:wait:" + to, String.valueOf(System.currentTimeMillis()), 1, TimeUnit.MINUTES))){
             sendEmail(to, "验证码", code);
-            //只接受最新验证码
-            stringRedisTemplate.opsForValue().set("email:tryLogin:"+to, code, 5, TimeUnit.MINUTES);
             return true;
         } else{
             return false;

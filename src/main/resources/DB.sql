@@ -1,3 +1,6 @@
+CREATE DATABASE platform;
+
+CREATE SCHEMA activity;
 CREATE TABLE tb_org (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255),
