@@ -2,6 +2,8 @@ package com.activity.platform.util.interceptor;
 
 import cn.hutool.json.JSONUtil;
 import com.activity.platform.dto.UserDTO;
+import com.activity.platform.pojo.Admin;
+import com.activity.platform.util.AdminHolder;
 import com.activity.platform.util.UserHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +26,10 @@ public class TokenInterceptor implements HandlerInterceptor {
                 UserDTO user = JSONUtil.toBean(userJson, UserDTO.class);
                 UserHolder.setUser(user);
             }
+            String adminJson = stringRedisTemplate.opsForValue().get("admin:login:"+token);
+            if(adminJson!=null){
+                AdminHolder.save(JSONUtil.toBean(adminJson, Admin.class,false));
+            }
         } HandlerInterceptor.super.preHandle(request, response, handler);
         return true;
     }
@@ -35,6 +41,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             @NonNull Object handler,
             ModelAndView modelAndView) throws Exception {
         UserHolder.remove();
+        AdminHolder.remove();
         HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
     }
 }
