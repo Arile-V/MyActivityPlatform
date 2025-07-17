@@ -10,11 +10,14 @@ import com.activity.platform.pojo.User;
 import com.activity.platform.service.IUserService;
 import com.activity.platform.service.IJavaMailService;
 import com.activity.platform.util.EmailCode;
+import com.activity.platform.util.SnowflakeIdWorker;
+import com.activity.platform.util.UserHolder;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -31,44 +34,121 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Resource
     private IJavaMailService javaMailService;
+    @Resource
+    private SnowflakeIdWorker snowflakeIdWorker;
 
     @Override
-    public Result sentCode(String username) throws MessagingException {
+    public Result sentCode(String loginString) throws MessagingException {
+        // 生成随机验证码
         String code = EmailCode.randomCode();
-        User user = query().eq("username",username).one();
+        // 根据用户名查询用户
+        User user = query().eq("username",loginString).one();
+        // 如果用户不存在，则根据邮箱查询用户
         if(user==null){
-            return Result.fail("用户不存在");
+            user = query().eq("email",loginString).one();
+            // 如果用户仍然不存在，则返回用户不存在的提示
+            if(user == null){
+                return Result.fail("用户不存在");
+            }
         }
+        // 如果验证码发送成功，则返回发送成功的提示
         if(Boolean.TRUE.equals(stringRedisTemplate.opsForValue()
-                .setIfAbsent("loginForm:" + username, code, 60 * 5, TimeUnit.SECONDS))){
-            if(javaMailService.sendEmailCode(user.getEmail(),code)){
+                .setIfAbsent("loginForm:" + loginString, code, 60 * 5, TimeUnit.SECONDS))){
+            if(javaMailService.sendEmailCode(user.getEmail(),"登录验证码"+code+"请勿泄漏")){
                 return Result.ok("发送成功");
+            // 如果验证码发送失败，则返回请勿频繁发送验证码的提示
             }else{
                 return Result.fail("请勿频繁发送验证码");
             }
+        // 如果验证码发送失败，则返回请勿频繁发送验证码的提示
         }else{
             return Result.fail("请勿频繁发送验证码");
         }
     }
 
     @Override
-    public Result login(String username, String code) {
-        String cacheCode = stringRedisTemplate.opsForValue().get("loginForm:"+username);
+    public Result login(String loginUser, String code) {
+        String cacheCode = stringRedisTemplate.opsForValue().get("loginForm:"+loginUser);
         if (cacheCode == null){
             return Result.fail("请先获取验证码");
         }else if(!cacheCode.equals(code)){
             return Result.fail("验证码错误");
         }else{
-            User user = query().eq("username",username).one();
+            User user = query().eq("username",loginUser).one();
             if (user == null){
-                return Result.fail("用户不存在");
+                user = query().eq("email",loginUser).one();
+                if(user == null){
+                    return Result.fail("用户不存在");
+                }else{
+                    return loginSuccess(loginUser, user);
+                }
             }else{
-                UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-                stringRedisTemplate.delete("loginForm:"+username);
-                String token = UUID.randomUUID().toString();
-                stringRedisTemplate.opsForValue().set("user:token:"+token, JSONUtil.toJsonStr(userDTO), 60*60*24, TimeUnit.SECONDS);
-                return Result.ok(token);
+                return loginSuccess(loginUser, user);
             }
         }
     }
+
+
+    // 登录成功方法
+    private Result loginSuccess(String loginUser, User user) {
+        // 将User对象转换为UserDTO对象
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        // 删除Redis中存储的登录表单信息
+        stringRedisTemplate.delete("loginForm:"+loginUser);
+        // 生成一个随机的token
+        String token = UUID.randomUUID().toString();
+        // 将UserDTO对象转换为JSON字符串，并存储到Redis中，设置过期时间为24小时
+        stringRedisTemplate.opsForValue().set("user:token:"+token, JSONUtil.toJsonStr(userDTO), 60*60*24, TimeUnit.SECONDS);
+        // 返回登录成功的结果，包含生成的token
+        return Result.ok(token);
+    }
+
+    @Override
+    public Result sentRegisterCode(User user) throws MessagingException {
+        //判断邮箱是否已被注册
+        if(query().eq("email",user.getEmail()).one()!=null){
+            return Result.fail("该邮箱已被注册");
+        }else if(query().eq("username",user.getUsername()).one()!=null){
+            return Result.fail("该用户名已被注册");
+        }else if (query().eq("school_id",user.getSchoolID()).one()!=null){
+            return Result.fail("该学号已被注册");
+        }
+        user.setId(snowflakeIdWorker.nextId());
+        String code = EmailCode.randomCode();
+        javaMailService.sendEmailCode(user.getEmail(),"注册验证码"+code+"请勿泄漏");
+        while(Boolean.FALSE.equals(stringRedisTemplate.opsForValue()
+                .setIfAbsent("user:register" + code, JSONUtil.toJsonStr(user), 60 * 5, TimeUnit.SECONDS))){
+            code = EmailCode.randomCode(); //保证唯一性
+        }
+        stringRedisTemplate.opsForValue().set("user:register:email"+user.getEmail(), code, 60*5, TimeUnit.SECONDS);
+        return Result.ok("发送成功");
+    }
+
+    @Override
+    @Transactional
+    public Result register(String email, String code) {
+        //1.判断验证码是否正确
+        String cacheEmailCode = stringRedisTemplate.opsForValue().get("user:register:email"+email);
+        if(cacheEmailCode == null){
+            return Result.fail("验证码已过期");
+        }
+        if(!cacheEmailCode.equals(code)){
+            return Result.fail("验证码不正确");
+        }
+        //2.如果正确，将缓存当中的用户数据持久化到数据库当中
+        User user = JSONUtil.toBean(stringRedisTemplate.opsForValue().get("user:register:"+code),User.class);
+        save(user);
+        return Result.ok("注册成功");
+    }
+
+    @Override
+    public Result logout(String token) {
+        // 删除用户token
+        if(stringRedisTemplate.delete("user:token:"+token))
+        // 如果删除成功，返回登出成功
+        return Result.ok("登出成功");
+        // 如果删除失败，返回登录状态已经失效
+        else return Result.fail("登录状态已经失效");
+    }
+
 }

@@ -8,4 +8,7 @@ import jakarta.mail.MessagingException;
 public interface IUserService extends IService<User> {
     public Result sentCode(String username) throws MessagingException;
     public Result login(String username, String code);
+    public Result logout(String token);
+    public Result sentRegisterCode(User user) throws MessagingException;
+    public Result register(String email, String code);
 }

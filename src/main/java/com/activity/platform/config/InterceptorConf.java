@@ -1,5 +1,6 @@
 package com.activity.platform.config;
 
+import com.activity.platform.util.interceptor.AdminInterceptor;
 import com.activity.platform.util.interceptor.LoginInterceptor;
 import com.activity.platform.util.interceptor.TokenInterceptor;
 import jakarta.annotation.Resource;
@@ -16,14 +17,17 @@ public class InterceptorConf implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new TokenInterceptor(stringRedisTemplate))
                 .addPathPatterns("/**").order(0);
-        //TODO 最后进行权限配置
-       registry.addInterceptor(new LoginInterceptor(stringRedisTemplate))
+        //TODO 写完接口最后进行权限配置
+       registry.addInterceptor(new LoginInterceptor())
                 .addPathPatterns(
-                        "/user/me",
-                        "/user/login",
+                        "/user/*",
                         "/vol/get",
                         "/vol/remove"
                         ).order(1);
+       registry.addInterceptor(new AdminInterceptor())
+               .addPathPatterns(
+                       "/admin/doit"
+               ).order(1);
     }
 
 }
