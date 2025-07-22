@@ -10,7 +10,9 @@ import com.activity.platform.util.SnowflakeIdWorker;
 import com.activity.platform.util.UserHolder;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import org.springframework.stereotype.Service;
 
+@Service
 public class Org2UserServiceImpl extends ServiceImpl<Org2UserMapper, Org2User> implements IOrg2UserService {
     @Resource
     SnowflakeIdWorker snowflakeIdWorker;
@@ -28,5 +30,21 @@ public class Org2UserServiceImpl extends ServiceImpl<Org2UserMapper, Org2User> i
         save(pastOrg);
         return Result.ok("成功归属");
 
+    }
+
+    @Override
+    public Result checkUser(Long OrgId) {
+        return Result.ok(query().eq("org_id",OrgId).list());
+    }
+
+    @Override
+    public Result selectUser(Long UserId) {
+        return Result.ok(query().eq("user_id",UserId).one());
+    }
+
+    @Override
+    public Result userQuit(Long OrgId) {
+        remove(query().eq("org_id",OrgId).eq("user_id",UserHolder.getUser().getId()));
+        return Result.ok("成功退出");
     }
 }

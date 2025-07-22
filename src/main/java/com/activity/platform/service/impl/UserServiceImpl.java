@@ -1,6 +1,5 @@
 package com.activity.platform.service.impl;
 
-import cn.hutool.Hutool;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.activity.platform.dto.Result;
@@ -21,6 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import static com.activity.platform.util.RedisString.LOGIN;
+import static com.activity.platform.util.RedisString.USER_REGISTER;
+import static com.activity.platform.util.RedisString.USER_REGISTER_EMAIL;
+import static com.activity.platform.util.RedisString.USER_TOKEN;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
@@ -53,7 +57,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         // 如果验证码发送成功，则返回发送成功的提示
         if(Boolean.TRUE.equals(stringRedisTemplate.opsForValue()
-                .setIfAbsent("loginForm:" + loginString, code, 60 * 5, TimeUnit.SECONDS))){
+                .setIfAbsent(LOGIN + loginString, code, 60 * 5, TimeUnit.SECONDS))){
             if(javaMailService.sendEmailCode(user.getEmail(),"登录验证码"+code+"请勿泄漏")){
                 return Result.ok("发送成功");
             // 如果验证码发送失败，则返回请勿频繁发送验证码的提示
@@ -68,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result login(String loginUser, String code) {
-        String cacheCode = stringRedisTemplate.opsForValue().get("loginForm:"+loginUser);
+        String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN+loginUser);
         if (cacheCode == null){
             return Result.fail("请先获取验证码");
         }else if(!cacheCode.equals(code)){
@@ -94,11 +98,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 将User对象转换为UserDTO对象
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         // 删除Redis中存储的登录表单信息
-        stringRedisTemplate.delete("loginForm:"+loginUser);
+        stringRedisTemplate.delete(LOGIN+loginUser);
         // 生成一个随机的token
         String token = UUID.randomUUID().toString();
         // 将UserDTO对象转换为JSON字符串，并存储到Redis中，设置过期时间为24小时
-        stringRedisTemplate.opsForValue().set("user:token:"+token, JSONUtil.toJsonStr(userDTO), 60*60*24, TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(USER_TOKEN + token, JSONUtil.toJsonStr(userDTO), 60*60*24, TimeUnit.SECONDS);
         // 返回登录成功的结果，包含生成的token
         return Result.ok(token);
     }
@@ -117,10 +121,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String code = EmailCode.randomCode();
         javaMailService.sendEmailCode(user.getEmail(),"注册验证码"+code+"请勿泄漏");
         while(Boolean.FALSE.equals(stringRedisTemplate.opsForValue()
-                .setIfAbsent("user:register" + code, JSONUtil.toJsonStr(user), 60 * 5, TimeUnit.SECONDS))){
+                .setIfAbsent(USER_REGISTER + code, JSONUtil.toJsonStr(user), 60 * 5, TimeUnit.SECONDS))){
             code = EmailCode.randomCode(); //保证唯一性
         }
-        stringRedisTemplate.opsForValue().set("user:register:email"+user.getEmail(), code, 60*5, TimeUnit.SECONDS);
+        stringRedisTemplate.opsForValue().set(USER_REGISTER_EMAIL+user.getEmail(), code, 60*5, TimeUnit.SECONDS);
         return Result.ok("发送成功");
     }
 
@@ -128,7 +132,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Transactional
     public Result register(String email, String code) {
         //1.判断验证码是否正确
-        String cacheEmailCode = stringRedisTemplate.opsForValue().get("user:register:email"+email);
+        String cacheEmailCode = stringRedisTemplate.opsForValue().get(USER_REGISTER_EMAIL+email);
         if(cacheEmailCode == null){
             return Result.fail("验证码已过期");
         }
@@ -136,7 +140,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return Result.fail("验证码不正确");
         }
         //2.如果正确，将缓存当中的用户数据持久化到数据库当中
-        User user = JSONUtil.toBean(stringRedisTemplate.opsForValue().get("user:register:"+code),User.class);
+        User user = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(USER_REGISTER+code),User.class);
         save(user);
         return Result.ok("注册成功");
     }
@@ -144,7 +148,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public Result logout(String token) {
         // 删除用户token
-        if(stringRedisTemplate.delete("user:token:"+token))
+        if(stringRedisTemplate.delete(USER_TOKEN+token))
         // 如果删除成功，返回登出成功
         return Result.ok("登出成功");
         // 如果删除失败，返回登录状态已经失效

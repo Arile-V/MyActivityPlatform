@@ -6,4 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface IOrg2UserService extends IService<Org2User> {
     public Result userJoin(Long OrgId);
+    public Result checkUser(Long OrgId);
+    public Result selectUser(Long UserId);
+    public Result userQuit(Long OrgId);
 }

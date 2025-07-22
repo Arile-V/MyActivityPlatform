@@ -5,16 +5,22 @@ import com.activity.platform.dto.Result;
 import com.activity.platform.mapper.AdminMapper;
 import com.activity.platform.pojo.Admin;
 import com.activity.platform.service.IAdminService;
+import com.activity.platform.util.AdminHolder;
 import com.activity.platform.util.CacheUtil;
+import com.activity.platform.util.SnowflakeIdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Service
 public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements IAdminService {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private SnowflakeIdWorker idWorker;
     @Override
     public Result login(String username, String password) {
         Admin admin = query().eq("username", username).eq("password", password).one();
@@ -25,5 +31,18 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
             stringRedisTemplate.opsForValue().set("login:admin:"+token, JSONUtil.toJsonStr(admin));
             return Result.ok(token);
         }
+    }
+
+    @Override
+    public Result register(Admin admin) {
+        admin.setId(idWorker.nextId());
+        save(admin);
+        return Result.ok();
+    }
+
+    @Override
+    public Result logout() {
+        stringRedisTemplate.delete("login:admin:"+ AdminHolder.get().getId());
+        return Result.ok();
     }
 }

@@ -3,6 +3,7 @@ package com.activity.platform.util;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -10,6 +11,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -34,22 +36,25 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
         String json = JSONUtil.toJsonStr(objMap);
         stringRedisTemplate.opsForValue().set(key, json);
     }
-    public <T> T getOrExpire(String key, Class<T> clazz, Function<Long,T> queryFunction){
+    public <T> T getOrExpire(String key, Class<T> clazz, Function<Long,T> queryFunction) throws NoSuchFieldException, IllegalAccessException {
         String isEmpty = stringRedisTemplate.opsForValue().get("empty:"+key);
         if(isEmpty != null && isEmpty.equals("空对象")){
             return null;
         }
         String json = stringRedisTemplate.opsForValue().get(key);
-        Map<String,Object> map = JSONUtil.toBean(json, Map.class);
-        if((long)map.get("expire") < System.currentTimeMillis()){
+        JSON json1 = JSONUtil.parse(json);
+        LocalDateTime expire = (LocalDateTime)JSONUtil.getByPath(json1, "expire");
+        T data = JSONUtil.toBean(json, clazz);
+        if(expire.isBefore(LocalDateTime.now())){
             RLock lock = redissonClient.getLock("lock:"+key);
             if(lock.tryLock()){
-                T data = queryFunction.apply((Long) map.get("id"));
+                data = queryFunction.apply((data.getClass().getField("id").getLong(data)));
                 if (data != null) {
+                    T finalData = data;
                     Thread.ofVirtual().start(
                             () -> {
                                 try {
-                                    load(key, data);
+                                    load(key, finalData);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 } finally {
@@ -71,7 +76,6 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
                 return data;
             }
         }
-        map.remove("expire");
-        return BeanUtil.toBean(map, clazz);
+        return data;
     }
 }

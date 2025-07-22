@@ -71,3 +71,9 @@ CREATE TABLE volunteer (
     user_id BIGINT REFERENCES tb_user(id),
     activity_id BIGINT REFERENCES tb_activity(id)
 );
+CREATE TABLE activity_character(
+    id BIGSERIAL PRIMARY KEY,
+    activity_id BIGINT REFERENCES tb_activity(id),
+    character_name VARCHAR,
+    volume BIGINT
+);
