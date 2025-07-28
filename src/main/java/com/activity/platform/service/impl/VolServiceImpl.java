@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service;
 public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolService {
 
     @Override
-    public Result addVol(Long ActivityID) {
+    public Result addVol(Long ActivityID) { //下单用
+
         return null;
     }
 }

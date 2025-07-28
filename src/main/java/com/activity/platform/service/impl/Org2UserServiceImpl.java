@@ -17,7 +17,7 @@ public class Org2UserServiceImpl extends ServiceImpl<Org2UserMapper, Org2User> i
     @Resource
     SnowflakeIdWorker snowflakeIdWorker;
     @Override
-    public Result userJoin(Long OrgId) {
+    public Result userJoin(Long OrgId) {//用户选择归属某一个组织
         UserDTO userDto = UserHolder.getUser();
         Org2User pastOrg = query().eq("user_id",userDto.getId()).one();
         if(pastOrg != null){
@@ -35,16 +35,21 @@ public class Org2UserServiceImpl extends ServiceImpl<Org2UserMapper, Org2User> i
     @Override
     public Result checkUser(Long OrgId) {
         return Result.ok(query().eq("org_id",OrgId).list());
-    }
+    }//管理员查组织内人员
 
     @Override
     public Result selectUser(Long UserId) {
         return Result.ok(query().eq("user_id",UserId).one());
-    }
+    }//用户自查组织归属情况
 
     @Override
     public Result userQuit(Long OrgId) {
         remove(query().eq("org_id",OrgId).eq("user_id",UserHolder.getUser().getId()));
         return Result.ok("成功退出");
+    }
+
+    @Override//管理员踢出用户
+    public Result kickOutUser(Long OrgId, Long UserId) {
+        return null;
     }
 }

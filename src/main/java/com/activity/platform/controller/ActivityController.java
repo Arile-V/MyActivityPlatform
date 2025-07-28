@@ -2,6 +2,7 @@ package com.activity.platform.controller;
 
 import com.activity.platform.dto.Result;
 import com.activity.platform.pojo.Activity;
+import com.activity.platform.service.IActivityCharacterService;
 import com.activity.platform.service.IActivityService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.Mapping;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController("/activity")
 public class ActivityController {
     private final IActivityService activityService;
+    private final IActivityCharacterService activityCharacterService;
 
-    public ActivityController(IActivityService activityService) {
+    public ActivityController(IActivityService activityService, IActivityCharacterService activityCharacterService) {
         this.activityService = activityService;
+        this.activityCharacterService = activityCharacterService;
     }
 
     @PostMapping("/create")
@@ -49,17 +52,24 @@ public class ActivityController {
     //首页展示的最新活动
     @GetMapping("/list/new")
     public Result listNewActivity() {
+
         return activityService.activityPage(1,5);
     }
 
     //首页展示的热点活动(热点活动是指浏览量大的且在缓存中的)
     @GetMapping("/list/hot")
     public Result listHotActivity() {
+
         return activityService.hotActivity();
     }
 
     @GetMapping("{id}")
     public Result getActivity(@PathVariable Long id) throws NoSuchFieldException, IllegalAccessException {
         return Result.ok(activityService.getActivityById(id));
+    }
+
+    @GetMapping("/character/{id}")
+    public Result getActivityCharacter(@PathVariable Long id) {
+        return activityCharacterService.queryByActivity(id);
     }
 }

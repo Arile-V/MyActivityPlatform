@@ -7,6 +7,8 @@ import com.activity.platform.service.IUserService;
 import com.activity.platform.util.UserHolder;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -35,6 +37,11 @@ public class UserController {
     @PostMapping("/user2org")
     public Result registerUser2Org() {
         return org2UserService.userJoin(UserHolder.getUser().getId());
+    }
+
+    @GetMapping("/user/org/{id}")
+    public Result checkUser(@PathVariable Long id) {
+        return org2UserService.checkUser(id);
     }
 
     @PostMapping("/logout")

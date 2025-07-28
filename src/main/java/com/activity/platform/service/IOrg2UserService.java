@@ -9,4 +9,5 @@ public interface IOrg2UserService extends IService<Org2User> {
     public Result checkUser(Long OrgId);
     public Result selectUser(Long UserId);
     public Result userQuit(Long OrgId);
+    public Result kickOutUser(Long OrgId,Long UserId);
 }

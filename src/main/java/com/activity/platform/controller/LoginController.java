@@ -1,16 +1,13 @@
 package com.activity.platform.controller;
 
 import com.activity.platform.dto.Result;
-import com.activity.platform.pojo.User;
+
 import com.activity.platform.service.IAdminService;
 import com.activity.platform.service.IUserService;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController("/login")
