@@ -6,6 +6,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 
 public interface IAdminService extends IService<Admin> {
     Result login(String username, String password);
-    Result register(Admin admin);
+    Result register(Admin admin,Long OrgId);
     Result logout();
 }

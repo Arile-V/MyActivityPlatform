@@ -36,6 +36,15 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
         String json = JSONUtil.toJsonStr(objMap);
         stringRedisTemplate.opsForValue().set(key, json);
     }
+
+    public void load4Hash(String key, Object object){
+        Map<String,Object> objMap = BeanUtil.beanToMap(object);
+        if(object.getClass() == String.class && ((String)object).equals("空对象")){
+        }else{
+            objMap.put("expire", System.currentTimeMillis()+time+ RandomUtil.randomLong(0L,600000L));//TODO 过期时间
+        }
+        stringRedisTemplate.opsForHash().putAll(key, objMap);
+    }
     public <T> T getOrExpire(String key, Class<T> clazz, Function<Long,T> queryFunction) throws NoSuchFieldException, IllegalAccessException {
         String isEmpty = stringRedisTemplate.opsForValue().get("empty:"+key);
         if(isEmpty != null && isEmpty.equals("空对象")){

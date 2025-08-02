@@ -7,15 +7,14 @@ import lombok.Data;
 import java.sql.Timestamp;
 
 @Data
-@TableName("tb_user")
+@TableName("tb_user") // 表名
 public class User {
-    @TableId
+    @TableId // 主键
     private Long id;
-
-    private String username;
-    private String email;
-    private Timestamp createTime;
-    private Long workingHours;
-    private String schoolID;
-    private String name;
+    private String username; // 用户名
+    private String email; // 邮箱
+    private Timestamp createTime; // 创建时间
+    private Long workingHours; // 工作时长
+    private String schoolID; // 学校ID
+    private String name; // 姓名
 }

@@ -15,6 +15,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
     退出活动的时候要重新写缓存和写库，这个要同步操作
 * */
 public interface IVolService extends IService<Vol>{
-    Result addVol(Long ActivityID);
+    Result get();
 
 }

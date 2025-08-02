@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("/register")
+@RestController("/user")
 public class UserController {
     private final IUserService userService;
     private final IOrg2UserService org2UserService;
@@ -24,12 +24,12 @@ public class UserController {
         this.org2UserService = org2UserService;
     }
 
-    @PostMapping("/user/code")
+    @PostMapping("/register/code")
     public Result registerCode(@RequestBody User user) throws MessagingException {
         return userService.sentRegisterCode(user);
     }
 
-    @PostMapping("/user/confirm")
+    @PostMapping("/register/confirm")
     public Result registerConfirm(@RequestBody String email, @RequestBody String code) {
         return userService.register(email, code);
     }
@@ -39,7 +39,7 @@ public class UserController {
         return org2UserService.userJoin(UserHolder.getUser().getId());
     }
 
-    @GetMapping("/user/org/{id}")
+    @GetMapping("/org/{id}")
     public Result checkUser(@PathVariable Long id) {
         return org2UserService.checkUser(id);
     }
@@ -47,5 +47,15 @@ public class UserController {
     @PostMapping("/logout")
     public Result logout(@RequestHeader String token) {
         return userService.logout(token);
+    }
+
+    @PostMapping("/login/code")
+    public Result userCode(@RequestBody String username) throws MessagingException {
+        return userService.sentCode(username);
+    }
+
+    @PostMapping("/login")
+    public Result userLogin(@RequestBody String username, @RequestBody String code){
+        return userService.login(username,code);
     }
 }

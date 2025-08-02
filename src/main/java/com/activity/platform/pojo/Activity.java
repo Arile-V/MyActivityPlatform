@@ -7,16 +7,28 @@ import java.sql.Timestamp;
 @Data
 @TableName("tb_activity")
 public class Activity {
+    // 活动ID
     private Long id;
+    // 活动名称
     private String name;
+    // 活动描述
     private String description;
+    // 活动地点
     private String location;
+    // 活动状态
     private String status;
+    // 活动图片URL
     private String imageUrl;
+    // 活动类型
     private String type;
+    // 活动开始时间
     private Timestamp startTime;
+    // 活动结束时间
     private Timestamp endTime;
+    // 活动领取开始时间
     private Timestamp startToGetTime;
+    // 活动领取结束时间
     private Timestamp endToGetTime;
+    // 活动创建时间
     private Timestamp createTime;
 }

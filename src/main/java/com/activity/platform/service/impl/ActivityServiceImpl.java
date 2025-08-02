@@ -2,11 +2,18 @@ package com.activity.platform.service.impl;
 
 import cn.hutool.json.JSONUtil;
 import com.activity.platform.dto.Result;
+import com.activity.platform.enums.ActivityStatus;
 import com.activity.platform.mapper.ActivityMapper;
 import com.activity.platform.pojo.Activity;
+import com.activity.platform.pojo.ActivityCharacter;
+import com.activity.platform.pojo.plus.Vol;
 import com.activity.platform.service.IActivityService;
+import com.activity.platform.service.IVolService;
 import com.activity.platform.util.CacheUtil;
 import com.activity.platform.util.SnowflakeIdWorker;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.data.redis.core.RedisOperations;
@@ -21,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.activity.platform.enums.ActivityStatus.START;
 import static com.activity.platform.util.RedisString.ACTIVITY;
 import static com.activity.platform.util.RedisString.ACTIVITY_HOT;
 
@@ -29,11 +37,17 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     private final SnowflakeIdWorker idWorker;
     private final StringRedisTemplate stringRedisTemplate;
     private final CacheUtil cacheUtil;
+    private final ActivityCharacterService activityCharacterService;
 
-    public ActivityServiceImpl(SnowflakeIdWorker idWorker, StringRedisTemplate stringRedisTemplate, CacheUtil cacheUtil) {
+    private final IVolService volService;
+
+    public ActivityServiceImpl(SnowflakeIdWorker idWorker, StringRedisTemplate stringRedisTemplate, CacheUtil cacheUtil,
+                               ActivityCharacterService activityCharacterService, IVolService volService) {
         this.idWorker = idWorker;
         this.stringRedisTemplate = stringRedisTemplate;
         this.cacheUtil = cacheUtil;
+        this.activityCharacterService = activityCharacterService;
+        this.volService = volService;
     }
 
     @Override
@@ -125,5 +139,38 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         removeFromHotList(activityId);
         stringRedisTemplate.delete(ACTIVITY + activityId);
         return Result.ok();
+    }
+
+    @Override
+    @Transactional
+    public void start(Long activityId) {
+        //将这个ID的活动及其角色改变为激活状态，相关报名全部转为未签到状态等待签到
+        Activity activity = getById(activityId);
+        activity.setStatus(String.valueOf(START));
+        LambdaQueryWrapper<Vol> volQuery = new LambdaQueryWrapper<Vol>();
+        volQuery.select(Vol::getId,Vol::getStatus).eq(Vol::getActivityId,activityId);
+        List<Vol> volList = volService.list(volQuery);
+        volList.stream().forEach(vol -> {
+            vol.setStatus(2);
+        });
+        volService.updateBatchById(volList);
+        updateById(activity);
+        stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
+    }
+    @Transactional
+    @Override
+    public void start(List<Long> activityIds) {
+        LambdaUpdateWrapper<Activity> activityLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        activityLambdaUpdateWrapper.set(Activity::getStatus,START).in(Activity::getId,activityIds);
+        update(activityLambdaUpdateWrapper);
+        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
+        volService.update(volLambdaUpdateWrapper);
+        activityIds.stream().forEach(activityId -> {
+            Activity activity = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(ACTIVITY + activityId), Activity.class);
+            activity.setStatus(String.valueOf(START));
+            cacheUtil.load(ACTIVITY + activityId,activity);
+            //stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
+        });
     }
 }

@@ -69,7 +69,8 @@ CREATE TABLE org2user (
 CREATE TABLE volunteer (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES tb_user(id),
-    activity_id BIGINT REFERENCES tb_activity(id)
+    activity_id BIGINT REFERENCES tb_activity(id),
+    status INT
 );
 CREATE TABLE activity_character(
     id BIGSERIAL PRIMARY KEY,

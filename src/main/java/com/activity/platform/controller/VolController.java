@@ -26,4 +26,7 @@ public class VolController {
     public Result removeVolunteer() {
         return Result.ok();
     }
+
+    @PostMapping("/finish")
+    public Result finishVolunteer() {return Result.ok();}
 }

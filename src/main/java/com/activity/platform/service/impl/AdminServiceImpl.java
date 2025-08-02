@@ -5,6 +5,7 @@ import com.activity.platform.dto.Result;
 import com.activity.platform.mapper.AdminMapper;
 import com.activity.platform.pojo.Admin;
 import com.activity.platform.service.IAdminService;
+import com.activity.platform.service.IOrg2AdminService;
 import com.activity.platform.util.AdminHolder;
 import com.activity.platform.util.CacheUtil;
 import com.activity.platform.util.SnowflakeIdWorker;
@@ -21,6 +22,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     private StringRedisTemplate stringRedisTemplate;
     @Resource
     private SnowflakeIdWorker idWorker;
+    @Resource
+    private IOrg2AdminService org2AdminService;
     @Override
     public Result login(String username, String password) {
         Admin admin = query().eq("username", username).eq("password", password).one();
@@ -34,7 +37,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     }
 
     @Override
-    public Result register(Admin admin) {
+    public Result register(Admin admin,Long OrgId) {
+        if (org2AdminService.query().eq("org_id",OrgId).one() != null){
+            return Result.fail("该组织已存在管理员");
+        }
         admin.setId(idWorker.nextId());
         save(admin);
         return Result.ok();

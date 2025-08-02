@@ -1,6 +1,7 @@
 package com.activity.platform.controller;
 
 import com.activity.platform.dto.Result;
+import com.activity.platform.pojo.Org;
 import com.activity.platform.service.IOrgService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +13,7 @@ public class OrgController {
     private IOrgService orgService;
 
     @PostMapping("/Create")
-    public Result Create(){
-        return Result.ok();
+    public Result Create(Org org){
+        return orgService.createOrg(org);
     }
 }
