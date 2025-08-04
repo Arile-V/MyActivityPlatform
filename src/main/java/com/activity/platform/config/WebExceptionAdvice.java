@@ -26,6 +26,6 @@ public class WebExceptionAdvice {
         errorLog.setTime(Timestamp.valueOf(LocalDateTime.now()));
         errorLog.setStatus(1);
         logService.save(errorLog);
-        return Result.fail("服务器异常");
+        return Result.fail("服务器异常，请联系开发者修改");
     }
 }

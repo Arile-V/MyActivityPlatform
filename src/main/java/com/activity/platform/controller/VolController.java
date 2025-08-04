@@ -18,8 +18,8 @@ public class VolController {
     private IActivityCharacterService activityCharacterService;
 
     @PostMapping("/get")
-    public Result getVolunteer() {
-        return Result.ok();
+    public Result getVolunteer(Long activityCharacterId) {
+        return volunteerService.get(activityCharacterId);
     }
 
     @PostMapping("/remove")

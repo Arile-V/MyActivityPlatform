@@ -39,11 +39,13 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
 
     public void load4Hash(String key, Object object){
         Map<String,Object> objMap = BeanUtil.beanToMap(object);
-        if(object.getClass() == String.class && ((String)object).equals("空对象")){
-        }else{
-            objMap.put("expire", System.currentTimeMillis()+time+ RandomUtil.randomLong(0L,600000L));//TODO 过期时间
-        }
         stringRedisTemplate.opsForHash().putAll(key, objMap);
+    }
+
+    public <T> T getHash(String key, Class<T> clazz) throws NoSuchFieldException, IllegalAccessException {
+        Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(key);
+        T data = BeanUtil.mapToBean(entries, clazz, true);
+        return data;
     }
     public <T> T getOrExpire(String key, Class<T> clazz, Function<Long,T> queryFunction) throws NoSuchFieldException, IllegalAccessException {
         String isEmpty = stringRedisTemplate.opsForValue().get("empty:"+key);
@@ -56,33 +58,46 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
         T data = JSONUtil.toBean(json, clazz);
         if(expire.isBefore(LocalDateTime.now())){
             RLock lock = redissonClient.getLock("lock:"+key);
+
             if(lock.tryLock()){
-                data = queryFunction.apply((data.getClass().getField("id").getLong(data)));
-                if (data != null) {
-                    T finalData = data;
-                    Thread.ofVirtual().start(
-                            () -> {
-                                try {
-                                    load(key, finalData);
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                } finally {
-                                    lock.unlock();
+                try {
+                    data = queryFunction.apply((data.getClass().getField("id").getLong(data)));
+                    if (data != null) {
+                        T finalData = data;
+                        Thread.ofVirtual().start(
+                                () -> {
+                                    try {
+                                        load(key, finalData);
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    } finally {
+                                        lock.unlock();
+                                    }
                                 }
+                        );
+                    } else {
+                        Thread.ofVirtual().start(() -> {
+                            try{
+                                load("empty:"+key,"不存在");
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }finally {
+                                lock.unlock();
                             }
-                    );
-                } else {
-                    Thread.ofVirtual().start(() -> {
-                        try{
-                            load("empty:"+key,"不存在");
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }finally {
-                            lock.unlock();
-                        }
-                    });
+                        });
+                    }
+                    return data;
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                } catch (NoSuchFieldException e) {
+                    throw new RuntimeException(e);
+                } catch (SecurityException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    lock.unlock();
                 }
-                return data;
             }
         }
         return data;

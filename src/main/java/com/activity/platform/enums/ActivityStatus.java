@@ -5,6 +5,9 @@ public enum ActivityStatus {
     START("已开始"),
     END("已结束");
 
+    String myStatus;
+
     ActivityStatus(String status) {
+        status = status;
     }
 }
