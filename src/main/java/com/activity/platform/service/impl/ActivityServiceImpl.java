@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.activity.platform.enums.ActivityStatus.END;
 import static com.activity.platform.enums.ActivityStatus.START;
 import static com.activity.platform.util.RedisString.ACTIVITY;
 import static com.activity.platform.util.RedisString.ACTIVITY_HOT;
@@ -172,5 +173,17 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             cacheUtil.load(ACTIVITY + activityId,activity);
             //stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
         });
+    }
+
+    @Override
+    @Transactional
+    public void badVol(List<Long> activityIds) {
+        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        volLambdaUpdateWrapper.set(Vol::getStatus,3).in(Vol::getActivityId,activityIds);
+    }
+
+    @Override
+    public void close(Long activityId) {
+
     }
 }

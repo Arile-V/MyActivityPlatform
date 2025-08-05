@@ -17,4 +17,14 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface IVolService extends IService<Vol>{
     Result get(Long characterId);
 
+    Result quit(Long characterId);
+
+    Result check(Long characterId);
+
+    // 用户看自己参与过的活动总览
+    Result lists();
+
+    // 用户看自己参与过的活动详情
+    Result info(Long characterId);
+
 }

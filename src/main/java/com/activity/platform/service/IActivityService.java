@@ -21,4 +21,8 @@ public interface IActivityService extends IService<Activity> {
     public Result deleteActivity(Long activityId);
     public void start(Long activityId);
     public void start(List<Long> activityIds);
+
+    public void badVol(List<Long> activityIds);
+
+    public void close(Long activityId);
 }

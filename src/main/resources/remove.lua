@@ -9,3 +9,6 @@ if(redis.call('exists', userKey) == 1 & redis.call('exists',userLock) == 1) then
     redis.call('hincrby', volKey, 'volume', 1)
     return 1
 end
+
+return 0
+
