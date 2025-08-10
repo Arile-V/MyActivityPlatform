@@ -20,19 +20,19 @@ public class AdminController {
     @Resource
     private IOrg2UserService org2UserService;
 
-    @PostMapping("/login")
+    @PostMapping("/login/admin")
     public Result adminLogin(@RequestBody String userName , @RequestBody String password){
         return adminService.login(userName,password);
     }
-    @PostMapping("/logout")
+    @PostMapping("/logout/admin")
     public Result adminLogout(){
         return adminService.logout();
     }
-    @PostMapping("/register")
+    @PostMapping("/register/admin")
     public Result adminRegister(Admin admin,Long OrgId){
         return adminService.register(admin,OrgId);
     }
-    @PostMapping("/user2org")
+    @PostMapping("/user2org/admin")
     public Result registerUser2Org(Long OrgId){
         return org2UserService.checkUser(OrgId);
     }

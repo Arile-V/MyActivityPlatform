@@ -15,17 +15,17 @@ public class ActivityCharacterController {
     @Resource
     private IActivityCharacterService activityCharacterService;
 
-    @PostMapping("/create")
+    @PostMapping("/create/character")
     public Result create(@RequestBody ActivityCharacter activityCharacter){
         return activityCharacterService.create(activityCharacter);
     }
 
-    @PostMapping("/update")
+    @PostMapping("/update/character")
     public Result update(@RequestBody ActivityCharacter activityCharacter){
         return activityCharacterService.update(activityCharacter);
     }
 
-    @PostMapping("/delete")
+    @PostMapping("/delete/character")
     public Result delete(@RequestBody Long characterId){
         return activityCharacterService.delete(characterId);
     }

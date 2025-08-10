@@ -21,12 +21,12 @@ public class ActivityController {
         this.activityCharacterService = activityCharacterService;
     }
 
-    @PostMapping("/create")
+    @PostMapping("/create/activity")
     public Result createActivity(@RequestBody Activity activity) {
         return activityService.createActivity(activity);
     }
 
-    @PostMapping("/update")
+    @PostMapping("/update/activity")
     public Result updateActivity(@RequestBody Activity activity) {
         if (activityService.updateById(activity)){
             return Result.ok();
@@ -35,7 +35,7 @@ public class ActivityController {
         }
     }
 
-    @PostMapping("/delete")
+    @PostMapping("/delete/activity")
     public Result deleteActivity(@RequestBody Long id) {
         if (activityService.removeById(id)){
             return Result.ok();

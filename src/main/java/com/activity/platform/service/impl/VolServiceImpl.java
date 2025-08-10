@@ -1,5 +1,6 @@
 package com.activity.platform.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.activity.platform.dto.Result;
 import com.activity.platform.dto.UserDTO;
 import com.activity.platform.mapper.VolMapper;
@@ -12,6 +13,7 @@ import com.activity.platform.service.IVolService;
 import com.activity.platform.util.SnowflakeIdWorker;
 import com.activity.platform.util.UserHolder;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -19,6 +21,7 @@ import org.apache.catalina.core.ApplicationContext;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.boot.autoconfigure.web.WebProperties.Resources.Chain.Strategy.Content;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -38,23 +41,27 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static com.activity.platform.util.RedisString.ACTIVITY;
+
 @Service
 public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolService {
 
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Resource
-    private RedissonClient redissonClient;
+    private final RedissonClient redissonClient;
 
     @Resource
-    private SnowflakeIdWorker idWorker;
+    private final SnowflakeIdWorker idWorker;
 
     @Resource
-    private IActivityService activityService;
+    @Lazy
+    private final IActivityService activityService;
 
     @Resource
-    private IActivityCharacterService activityCharacterService;
+    @Lazy
+    private final IActivityCharacterService activityCharacterService;
 
     private final org.springframework.context.ApplicationContext applicationContext;
 
@@ -74,7 +81,19 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
 
     BlockingQueue<Vol> queue = new ArrayBlockingQueue<>(1000);
 
-    public VolServiceImpl(org.springframework.context.ApplicationContext applicationContext) {this.applicationContext = applicationContext;}
+    public VolServiceImpl(
+            StringRedisTemplate stringRedisTemplate,
+            RedissonClient redissonClient,
+            SnowflakeIdWorker idWorker,
+            IActivityService activityService,
+            IActivityCharacterService activityCharacterService,
+            org.springframework.context.ApplicationContext applicationContext) {
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.redissonClient = redissonClient;
+        this.idWorker = idWorker;
+        this.activityService = activityService;
+        this.activityCharacterService = activityCharacterService;
+        this.applicationContext = applicationContext;}
 
     @PostConstruct
     public void init() {
@@ -239,5 +258,30 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
         resultMap.put("activity",activity);
         resultMap.put("activityCharacter",activityCharacter);
         return Result.ok(resultMap);
+    }
+
+  @Override
+    public void start(Long activityId){
+      LambdaQueryWrapper<Vol> volQuery = new LambdaQueryWrapper<Vol>();
+      volQuery.select(Vol::getId,Vol::getStatus).eq(Vol::getActivityId,activityId);
+      List<Vol> volList = list(volQuery);
+      volList.stream().forEach(vol -> {
+          vol.setStatus(2);
+      });
+      updateBatchById(volList);
+  }
+
+  @Override
+    public void start(List<Long> activityIds){
+      LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+      volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
+      update(volLambdaUpdateWrapper);
+  }
+
+    @Override
+    public void badVol(List<Long> activityIds) {
+        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
+        update(volLambdaUpdateWrapper);
     }
 }

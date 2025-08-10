@@ -25,18 +25,22 @@ import java.util.Map;
 import static com.activity.platform.util.RedisString.ACTIVITY_ID;
 import static com.activity.platform.util.RedisString.SECKILL_CHARACTER;
 import static com.activity.platform.util.RedisString.VOL_CHARACTER;
+import static com.activity.platform.util.RedisString.VOL_TO_DELETE;
 
 @Service
 public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMapper, ActivityCharacter> implements IActivityCharacterService{
 
-    private final StringRedisTemplate stringRedisTemplate;
-    private final CacheUtil cacheUtil;
     @Resource
-    private IVolService volService;
+    private final  StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private final  CacheUtil cacheUtil;
+    @Resource
     private final SnowflakeIdWorker idWorker;
 
-    public ActivityCharacterService(StringRedisTemplate stringRedisTemplate, CacheUtil cacheUtil,
-                                    SnowflakeIdWorker idWorker) {
+    public ActivityCharacterService(
+            StringRedisTemplate stringRedisTemplate,
+            CacheUtil cacheUtil,
+            SnowflakeIdWorker idWorker) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.cacheUtil = cacheUtil;
         this.idWorker = idWorker;
@@ -62,9 +66,9 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
         stringRedisTemplate.delete(SECKILL_CHARACTER +id);
         //移除已经存在的报名
         stringRedisTemplate.delete(VOL_CHARACTER +id);
-        // 删除Vol表中activity_id等于id的数据
-        QueryChainWrapper<Vol> vol = volService.query().eq(ACTIVITY_ID,id);
-        volService.remove(vol);
+//        // 删除Vol表中activity_id等于id的数据
+//        QueryChainWrapper<Vol> vol = volService.query().eq(ACTIVITY_ID,id);
+//        volService.remove(vol);
         remove(query().eq("id",id));
         return Result.ok();
     }

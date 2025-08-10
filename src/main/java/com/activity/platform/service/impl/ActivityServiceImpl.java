@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
@@ -35,20 +36,21 @@ import static com.activity.platform.util.RedisString.ACTIVITY_HOT;
 
 @Service
 public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> implements IActivityService {
+    @Resource
     private final SnowflakeIdWorker idWorker;
+    @Resource
     private final StringRedisTemplate stringRedisTemplate;
+    @Resource
     private final CacheUtil cacheUtil;
-    private final ActivityCharacterService activityCharacterService;
 
-    private final IVolService volService;
 
-    public ActivityServiceImpl(SnowflakeIdWorker idWorker, StringRedisTemplate stringRedisTemplate, CacheUtil cacheUtil,
-                               ActivityCharacterService activityCharacterService, IVolService volService) {
+    public ActivityServiceImpl(
+            SnowflakeIdWorker idWorker,
+            StringRedisTemplate stringRedisTemplate,
+            CacheUtil cacheUtil) {
         this.idWorker = idWorker;
         this.stringRedisTemplate = stringRedisTemplate;
         this.cacheUtil = cacheUtil;
-        this.activityCharacterService = activityCharacterService;
-        this.volService = volService;
     }
 
     @Override
@@ -148,13 +150,13 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         //将这个ID的活动及其角色改变为激活状态，相关报名全部转为未签到状态等待签到
         Activity activity = getById(activityId);
         activity.setStatus(String.valueOf(START));
-        LambdaQueryWrapper<Vol> volQuery = new LambdaQueryWrapper<Vol>();
-        volQuery.select(Vol::getId,Vol::getStatus).eq(Vol::getActivityId,activityId);
-        List<Vol> volList = volService.list(volQuery);
-        volList.stream().forEach(vol -> {
-            vol.setStatus(2);
-        });
-        volService.updateBatchById(volList);
+//        LambdaQueryWrapper<Vol> volQuery = new LambdaQueryWrapper<Vol>();
+//        volQuery.select(Vol::getId,Vol::getStatus).eq(Vol::getActivityId,activityId);
+//        List<Vol> volList = volService.list(volQuery);
+//        volList.stream().forEach(vol -> {
+//            vol.setStatus(2);
+//        });
+//        volService.updateBatchById(volList);
         updateById(activity);
         stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
     }
@@ -164,9 +166,9 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         LambdaUpdateWrapper<Activity> activityLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         activityLambdaUpdateWrapper.set(Activity::getStatus,START).in(Activity::getId,activityIds);
         update(activityLambdaUpdateWrapper);
-        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
-        volService.update(volLambdaUpdateWrapper);
+//        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+//        volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
+//        volService.update(volLambdaUpdateWrapper);
         activityIds.stream().forEach(activityId -> {
             Activity activity = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(ACTIVITY + activityId), Activity.class);
             activity.setStatus(String.valueOf(START));
@@ -175,15 +177,4 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         });
     }
 
-    @Override
-    @Transactional
-    public void badVol(List<Long> activityIds) {
-        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        volLambdaUpdateWrapper.set(Vol::getStatus,3).in(Vol::getActivityId,activityIds);
-    }
-
-    @Override
-    public void close(Long activityId) {
-
-    }
 }

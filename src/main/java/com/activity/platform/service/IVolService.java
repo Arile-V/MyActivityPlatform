@@ -3,7 +3,10 @@ package com.activity.platform.service;
 import com.activity.platform.dto.Result;
 import com.activity.platform.pojo.Activity;
 import com.activity.platform.pojo.plus.Vol;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 //高并发
 /*
@@ -26,5 +29,10 @@ public interface IVolService extends IService<Vol>{
 
     // 用户看自己参与过的活动详情
     Result info(Long characterId);
+
+    void start(Long activityId);
+    void start(List<Long> activityIds);
+
+    void badVol(List<Long> activityIds);
 
 }

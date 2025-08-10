@@ -10,4 +10,6 @@ public class RedisString {
     public static final String SECKILL_CHARACTER = "seckill:character:";
     public static final String ACTIVITY_ID = "activity_id";
     public static final String VOL_CHARACTER = "vol:character:";
+
+    public static final String VOL_TO_DELETE = "vol:to_delete:";
 }
