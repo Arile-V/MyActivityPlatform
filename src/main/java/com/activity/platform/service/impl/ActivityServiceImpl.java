@@ -66,8 +66,9 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Override
     public Result activityPage(Integer pageNum, Integer pageSize) {
-        int number = count();
-        List<Activity> activities = query().list().subList(number-(pageNum*pageSize),number-(pageNum-1)*pageNum);
+        int number = (int)count();
+        List<Activity> activities = query().list().subList(number-(pageNum *pageSize),number-
+                 (pageNum - 1) *pageNum);
         return Result.ok(activities);
     }
 

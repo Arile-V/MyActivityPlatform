@@ -10,19 +10,27 @@ import jakarta.annotation.Resource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class ActivityStartTask {
     @Resource
-    private IActivityService activityService;
+    private final IActivityService activityService;
     @Resource
-    private IVolService volService;
+    private final IVolService volService;
+
+    public ActivityStartTask(IActivityService activityService, IVolService volService) {
+        this.activityService = activityService;
+        this.volService = volService;
+    }
+
     @Scheduled(cron = "0 * * * * ?")
     public void start() {
         LambdaQueryWrapper<Activity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.eq(Activity::getStatus, 0).le(Activity::getStartTime, System.currentTimeMillis());
+        lambdaQueryWrapper.eq(Activity::getStatus, "0").le(Activity::getStartTime, Timestamp.valueOf(LocalDateTime.now()));
         List<Activity> activities = activityService.list(lambdaQueryWrapper);
         if (!activities.isEmpty() && activities.size() < 10) {
             activities.stream().forEach(activity -> {

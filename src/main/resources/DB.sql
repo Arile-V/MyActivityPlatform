@@ -1,6 +1,4 @@
-CREATE DATABASE platform;
 
-CREATE SCHEMA activity;
 CREATE TABLE tb_org (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255),
@@ -68,13 +66,13 @@ CREATE TABLE org2user (
 );
 CREATE TABLE volunteer (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES tb_user(id),
-    activity_id BIGINT REFERENCES tb_activity(id),
+    user_id BIGINT REFERENCES tb_user(id) ON DELETE CASCADE ,
+    activity_id BIGINT REFERENCES tb_activity(id) ON DELETE CASCADE ,
     status INT
 );
 CREATE TABLE activity_character(
     id BIGSERIAL PRIMARY KEY,
-    activity_id BIGINT REFERENCES tb_activity(id),
+    activity_id BIGINT REFERENCES tb_activity(id) ON DELETE CASCADE ,
     character_name VARCHAR,
     volume BIGINT
 );

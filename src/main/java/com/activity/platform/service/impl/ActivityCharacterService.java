@@ -66,9 +66,6 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
         stringRedisTemplate.delete(SECKILL_CHARACTER +id);
         //移除已经存在的报名
         stringRedisTemplate.delete(VOL_CHARACTER +id);
-//        // 删除Vol表中activity_id等于id的数据
-//        QueryChainWrapper<Vol> vol = volService.query().eq(ACTIVITY_ID,id);
-//        volService.remove(vol);
         remove(query().eq("id",id));
         return Result.ok();
     }

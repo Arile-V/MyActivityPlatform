@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.3</version>
+    <version>3.5.3</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
   <groupId>com.activity</groupId>
@@ -29,12 +29,12 @@
   <properties>
     <java.version>21</java.version>
   </properties>
-  <repositories>
-    <repository>
-      <id>aliyunmaven</id>
-      <url>https://maven.aliyun.com/nexus/content/groups/public/</url>
-    </repository>
-  </repositories>
+<!--  <repositories>-->
+<!--    <repository>-->
+<!--      <id>aliyunmaven</id>-->
+<!--      <url>https://maven.aliyun.com/nexus/content/groups/public/</url>-->
+<!--    </repository>-->
+<!--  </repositories>-->
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -64,15 +64,15 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.mybatis.spring.boot</groupId>
-      <artifactId>mybatis-spring-boot-starter</artifactId>
-      <version>3.0.3</version>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.mybatis.spring.boot</groupId>-->
+<!--      <artifactId>mybatis-spring-boot-starter</artifactId>-->
+<!--      <version>3.0.3</version>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>com.baomidou</groupId>
-      <artifactId>mybatis-plus</artifactId>
-      <version>3.4.3</version>
+      <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+      <version>3.5.5</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>

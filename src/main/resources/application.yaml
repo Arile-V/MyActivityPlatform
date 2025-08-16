@@ -1,10 +1,11 @@
 server:
-  port: 8081
+  port: 8079
 spring:
   application:
     name: platform
   datasource:
-    url: jdbc:postgresql://localhost:5433/platform
+    url: jdbc:postgresql://localhost:5434/platform?currentSchema=activity
+    driver-class-name: org.postgresql.Driver
     username: postgres
     password: 951628437q
   data:
