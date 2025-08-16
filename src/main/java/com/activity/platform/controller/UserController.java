@@ -5,6 +5,9 @@ import com.activity.platform.pojo.User;
 import com.activity.platform.service.IOrg2UserService;
 import com.activity.platform.service.IUserService;
 import com.activity.platform.util.UserHolder;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "用户管理", description = "用户相关的接口")
 @RestController("/user")
 public class UserController {
     private final IUserService userService;
@@ -24,38 +28,61 @@ public class UserController {
         this.org2UserService = org2UserService;
     }
 
+    @Operation(summary = "发送注册验证码", description = "发送注册验证码到用户邮箱")
     @PostMapping("/register/code")
-    public Result registerCode(@RequestBody User user) throws MessagingException {
+    public Result registerCode(
+            @Parameter(description = "用户信息", required = true)
+            @RequestBody User user) throws MessagingException {
         return userService.sentRegisterCode(user);
     }
 
+    @Operation(summary = "确认注册", description = "使用邮箱和验证码完成注册")
     @PostMapping("/register/confirm")
-    public Result registerConfirm(@RequestBody String email, @RequestBody String code) {
+    public Result registerConfirm(
+            @Parameter(description = "邮箱地址", required = true, example = "user@example.com")
+            @RequestBody String email,
+            @Parameter(description = "验证码", required = true, example = "123456")
+            @RequestBody String code) {
         return userService.register(email, code);
     }
 
+    @Operation(summary = "用户加入组织", description = "当前用户加入组织")
     @PostMapping("/user2org")
     public Result registerUser2Org() {
         return org2UserService.userJoin(UserHolder.getUser().getId());
     }
 
+    @Operation(summary = "检查用户状态", description = "检查用户是否属于指定组织")
     @GetMapping("/org/{id}")
-    public Result checkUser(@PathVariable Long id) {
+    public Result checkUser(
+            @Parameter(description = "组织ID", required = true, example = "1")
+            @PathVariable Long id) {
         return org2UserService.checkUser(id);
     }
 
+    @Operation(summary = "用户退出登录", description = "用户退出当前登录状态")
     @PostMapping("/logout")
-    public Result logout(@RequestHeader String token) {
+    public Result logout(
+            @Parameter(description = "登录令牌", required = true)
+            @RequestHeader String token) {
         return userService.logout(token);
     }
 
+    @Operation(summary = "发送登录验证码", description = "发送登录验证码到用户邮箱")
     @PostMapping("/login/code")
-    public Result userCode(@RequestBody String username) throws MessagingException {
+    public Result userCode(
+            @Parameter(description = "用户名/邮箱", required = true, example = "user@example.com")
+            @RequestBody String username) throws MessagingException {
         return userService.sentCode(username);
     }
 
+    @Operation(summary = "用户登录", description = "使用邮箱和验证码登录")
     @PostMapping("/login")
-    public Result userLogin(@RequestBody String username, @RequestBody String code){
-        return userService.login(username,code);
+    public Result userLogin(
+            @Parameter(description = "用户名/邮箱", required = true, example = "user@example.com")
+            @RequestBody String username,
+            @Parameter(description = "验证码", required = true, example = "123456")
+            @RequestBody String code) {
+        return userService.login(username, code);
     }
 }
