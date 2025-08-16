@@ -13,7 +13,7 @@ public class UserHolder {
     }
 
     public static boolean exists() {
-        return userThreadLocal.get() != null;
+        return userThreadLocal != null;
     }
 
     public static void remove() {

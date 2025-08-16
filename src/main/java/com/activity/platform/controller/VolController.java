@@ -6,6 +6,7 @@ import com.activity.platform.service.IUserService;
 import com.activity.platform.service.IVolService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,18 +16,18 @@ public class VolController {
     @Resource
     private IVolService volunteerService;
 
-    @PostMapping("/get")
-    public Result getVolunteer(Long activityCharacterId) {
+    @GetMapping("/get/{activityCharacterId}")
+    public Result getVolunteer(@PathVariable Long activityCharacterId) {
         return volunteerService.get(activityCharacterId);
     }
 
-    @PostMapping("/remove")
-    public Result removeVolunteer(Long activityCharacterId) {
+    @PostMapping("/remove/{activityCharacterId}")
+    public Result removeVolunteer(@PathVariable Long activityCharacterId) {
         return volunteerService.quit(activityCharacterId);
     }
 
-    @PostMapping("/finish")
-    public Result finishVolunteer(Long activityCharacterId) {return volunteerService.check(activityCharacterId);}
+    @PostMapping("/finish/{activityCharacterId}")
+    public Result finishVolunteer(@PathVariable Long activityCharacterId) {return volunteerService.check(activityCharacterId);}
 
     @GetMapping("/lists")
     public Result lists() {

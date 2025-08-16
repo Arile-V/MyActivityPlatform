@@ -51,8 +51,12 @@ public class ActivityStartTask {
         lambdaQueryWrapper.select(Activity::getId).eq(Activity::getStatus, ActivityStatus.END.name());
         List<Activity> list = activityService.list(lambdaQueryWrapper);
         volService.badVol(list.stream().map(Activity::getId).collect(Collectors.toList()));
+
         LambdaUpdateWrapper<Activity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.set(Activity::getStatus,ActivityStatus.END.name()).eq(Activity::getStatus, 1).lt(Activity::getEndTime, System.currentTimeMillis());
+        lambdaUpdateWrapper.set(Activity::getStatus, ActivityStatus.END.name())
+                .eq(Activity::getStatus, "1")
+                .lt(Activity::getEndTime, new Timestamp(System.currentTimeMillis())); // 修复这里
+
         activityService.update(lambdaUpdateWrapper);
     }
 }

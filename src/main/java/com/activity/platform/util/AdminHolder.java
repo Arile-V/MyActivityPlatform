@@ -5,6 +5,10 @@ import com.activity.platform.pojo.Admin;
 public class AdminHolder {
     private static ThreadLocal<Admin> adminThreadLocal;
 
+
+    public static boolean exist(){
+        return adminThreadLocal != null;
+    }
     public static void save(Admin admin){
         adminThreadLocal.set(admin);
     }

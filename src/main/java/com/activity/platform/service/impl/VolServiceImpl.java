@@ -280,6 +280,9 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
 
     @Override
     public void badVol(List<Long> activityIds) {
+        if (activityIds==null||activityIds.isEmpty()){
+            return;
+        }
         LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
         update(volLambdaUpdateWrapper);

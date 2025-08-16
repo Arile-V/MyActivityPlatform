@@ -15,7 +15,7 @@ public class PlatformApplication {
     public static void main(String[] args) {
         SpringApplication.run(PlatformApplication.class, args);
         log.info("========");
-        log.info("启动成功");
+        log.info("启动成功，可以访问 http://localhost:8079/swagger-ui.html 查看open-api文档");
         log.info("========");
     }
 

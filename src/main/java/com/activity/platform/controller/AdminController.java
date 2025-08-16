@@ -29,11 +29,11 @@ public class AdminController {
         return adminService.logout();
     }
     @PostMapping("/register/admin")
-    public Result adminRegister(Admin admin,Long OrgId){
+    public Result adminRegister(@RequestBody Admin admin,@RequestBody Long OrgId){
         return adminService.register(admin,OrgId);
     }
     @PostMapping("/user2org/admin")
-    public Result registerUser2Org(Long OrgId){
+    public Result registerUser2Org(@RequestBody Long OrgId){
         return org2UserService.checkUser(OrgId);
     }
 }
