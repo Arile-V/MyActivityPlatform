@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "活动角色管理", description = "活动角色相关的接口")
-@RestController("/activityCharacter")
+@RestController
+@RequestMapping("/activityCharacter")
 public class ActivityCharacterController {
     @Resource
     private IActivityCharacterService activityCharacterService;
@@ -37,7 +38,7 @@ public class ActivityCharacterController {
     @Operation(summary = "删除活动角色", description = "根据ID删除活动角色")
     @PostMapping("/delete/character")
     public Result delete(
-            @Parameter(description = "活动角色ID", required = true, example = "1")
+            @Parameter(description = "活动角色ID", required = true)
             @RequestBody Long characterId) {
         return activityCharacterService.delete(characterId);
     }

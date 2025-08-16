@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "用户管理", description = "用户相关的接口")
-@RestController("/user")
+@RestController
+@RequestMapping("/user")
 public class UserController {
     private final IUserService userService;
     private final IOrg2UserService org2UserService;

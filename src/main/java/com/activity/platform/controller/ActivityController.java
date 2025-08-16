@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.Mapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "活动管理", description = "活动相关的接口")
-@RestController("/activity")
+@RestController
+@RequestMapping("/activity")
 public class ActivityController {
     private final IActivityService activityService;
     private final IActivityCharacterService activityCharacterService;
@@ -79,7 +81,7 @@ public class ActivityController {
     @Operation(summary = "获取活动详情", description = "根据ID获取活动详细信息")
     @GetMapping("{id}")
     public Result getActivity(
-            @Parameter(description = "活动ID", required = true, example = "1")
+            @Parameter(description = "活动ID", required = true)
             @PathVariable Long id) throws NoSuchFieldException, IllegalAccessException {
         return Result.ok(activityService.getActivityById(id));
     }
@@ -87,7 +89,7 @@ public class ActivityController {
     @Operation(summary = "获取活动角色", description = "获取指定活动的所有角色信息")
     @GetMapping("/character/{id}")
     public Result getActivityCharacter(
-            @Parameter(description = "活动ID", required = true, example = "1")
+            @Parameter(description = "活动ID", required = true)
             @PathVariable Long id) {
         return activityCharacterService.queryByActivity(id);
     }

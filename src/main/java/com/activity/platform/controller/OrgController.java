@@ -9,10 +9,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "组织管理", description = "组织相关的接口")
-@RestController("/Org")
+@RestController
+@RequestMapping("/Org")
 public class OrgController {
     @Resource
     private IOrgService orgService;
