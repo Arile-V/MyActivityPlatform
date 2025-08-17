@@ -1,6 +1,7 @@
 package com.activity.platform.controller;
 
 import com.activity.platform.dto.Result;
+import com.activity.platform.log.MyLog;
 import com.activity.platform.pojo.ActivityCharacter;
 import com.activity.platform.service.IActivityCharacterService;
 import io.swagger.v3.oas.annotations.Operation;
