@@ -21,7 +21,7 @@ public class ActivityCharacterController {
     private IActivityCharacterService activityCharacterService;
 
     @Operation(summary = "创建活动角色", description = "创建一个新的活动角色")
-    @PostMapping("/create/character")
+    @PostMapping("/create")
     public Result create(
             @Parameter(description = "活动角色信息", required = true)
             @RequestBody ActivityCharacter activityCharacter) {
@@ -29,7 +29,7 @@ public class ActivityCharacterController {
     }
 
     @Operation(summary = "更新活动角色", description = "更新已存在的活动角色信息")
-    @PostMapping("/update/character")
+    @PostMapping("/update")
     public Result update(
             @Parameter(description = "活动角色信息", required = true)
             @RequestBody ActivityCharacter activityCharacter) {
@@ -37,7 +37,7 @@ public class ActivityCharacterController {
     }
 
     @Operation(summary = "删除活动角色", description = "根据ID删除活动角色")
-    @PostMapping("/delete/character")
+    @PostMapping("/delete")
     public Result delete(
             @Parameter(description = "活动角色ID", required = true)
             @RequestBody Long characterId) {

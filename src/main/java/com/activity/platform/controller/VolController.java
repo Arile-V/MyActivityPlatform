@@ -22,7 +22,7 @@ public class VolController {
     @Resource
     private IVolService volunteerService;
 
-    @Operation(summary = "获取志愿者信息", description = "根据活动角色ID获取志愿者信息")
+    @Operation(summary = "报名", description = "报名")
     @GetMapping("/get/{activityCharacterId}")
     public Result getVolunteer(
             @Parameter(description = "活动角色ID", required = true, example = "1")

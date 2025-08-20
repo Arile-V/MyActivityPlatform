@@ -27,7 +27,7 @@ public class AdminController {
     private IOrg2UserService org2UserService;
 
     @Operation(summary = "管理员登录", description = "管理员用户名密码登录")
-    @PostMapping("/login/admin")
+    @PostMapping("/login")
     public Result adminLogin(
             @Parameter(description = "用户名", required = true)
             @RequestBody String userName,
@@ -37,13 +37,13 @@ public class AdminController {
     }
 
     @Operation(summary = "管理员退出登录", description = "管理员退出当前登录状态")
-    @PostMapping("/logout/admin")
+    @PostMapping("/logout")
     public Result adminLogout() {
         return adminService.logout();
     }
 
     @Operation(summary = "管理员注册", description = "注册新的管理员账号")
-    @PostMapping("/register/admin")
+    @PostMapping("/register")
     public Result adminRegister(
             @Parameter(description = "管理员信息", required = true)
             @RequestBody Admin admin,
@@ -53,7 +53,7 @@ public class AdminController {
     }
 
     @Operation(summary = "用户加入组织", description = "当前用户加入指定组织")
-    @PostMapping("/user2org/admin")
+    @PostMapping("/user2org")
     public Result registerUser2Org(
             @Parameter(description = "组织ID", required = true, example = "1")
             @RequestBody Long OrgId) {

@@ -28,7 +28,7 @@ public class ActivityController {
     }
 
     @Operation(summary = "创建活动", description = "创建一个新的活动")
-    @PostMapping("/create/activity")
+    @PostMapping("/create")
     public Result createActivity(
             @Parameter(description = "活动信息", required = true)
             @RequestBody Activity activity) {
@@ -36,7 +36,7 @@ public class ActivityController {
     }
 
     @Operation(summary = "更新活动", description = "更新已存在的活动信息")
-    @PostMapping("/update/activity")
+    @PostMapping("/update")
     public Result updateActivity(
             @Parameter(description = "活动信息", required = true)
             @RequestBody Activity activity) {
@@ -48,7 +48,7 @@ public class ActivityController {
     }
 
     @Operation(summary = "删除活动", description = "根据ID删除活动")
-    @PostMapping("/delete/activity")
+    @PostMapping("/delete")
     public Result deleteActivity(
             @Parameter(description = "活动ID", required = true, example = "1")
             @RequestBody Long id) {
