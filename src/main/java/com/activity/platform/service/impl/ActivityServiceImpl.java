@@ -72,9 +72,23 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Override
     public Result activityPage(Integer pageNum, Integer pageSize) {
         try {
+            log.info("开始分页查询活动，页码: {}, 每页大小: {}", pageNum, pageSize);
+            
+            // 先查询总数
+            long total = count();
+            log.info("活动总数: {}", total);
+            
+            if (total == 0) {
+                log.warn("数据库中没有活动数据");
+                return Result.ok(new Page<Activity>(pageNum, pageSize));
+            }
+            
             // 使用MyBatis-Plus的分页功能
             Page<Activity> page = new Page<>(pageNum, pageSize);
             Page<Activity> result = page(page);
+            
+            log.info("分页查询成功，返回记录数: {}, 总页数: {}", 
+                result.getRecords().size(), result.getPages());
             
             return Result.ok(result);
         } catch (Exception e) {
@@ -187,6 +201,41 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             cacheUtil.load(ACTIVITY + activityId,activity);
             //stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
         });
+    }
+
+    @Override
+    @Transactional
+    public void end(Long activityId) {
+        //将这个ID的活动及其角色改变为结束状态
+        Activity activity = getById(activityId);
+        activity.setStatus(String.valueOf(END));
+        updateById(activity);
+        // 从热门列表中移除
+        removeFromHotList(activityId);
+        // 清理缓存
+        stringRedisTemplate.delete(ACTIVITY + activityId);
+    }
+
+    @Override
+    public Result getAllActivities() {
+        try {
+            log.info("开始查询所有活动");
+            
+            // 查询所有活动
+            List<Activity> activities = list();
+            log.info("查询到活动数量: {}", activities.size());
+            
+            // 打印每个活动的基本信息
+            for (Activity activity : activities) {
+                log.info("活动ID: {}, 名称: {}, 创建时间: {}", 
+                    activity.getId(), activity.getName(), activity.getCreateTime());
+            }
+            
+            return Result.ok(activities);
+        } catch (Exception e) {
+            log.error("查询所有活动失败: ", e);
+            return Result.fail("查询所有活动失败: " + e.getMessage());
+        }
     }
 
 }

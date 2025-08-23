@@ -21,5 +21,11 @@ public interface IActivityService extends IService<Activity> {
     public Result deleteActivity(Long activityId);
     public void start(Long activityId);
     public void start(List<Long> activityIds);
-
+    public void end(Long activityId);
+    
+    /**
+     * 查询所有活动（用于调试）
+     * @return 所有活动列表
+     */
+    Result getAllActivities();
 }

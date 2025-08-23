@@ -96,4 +96,21 @@ public class ActivityController {
             @PathVariable Long id) {
         return activityCharacterService.queryByActivity(id);
     }
+
+    @Operation(summary = "查询所有活动（调试用）", description = "查询数据库中所有活动，用于调试")
+    @GetMapping("/debug/all")
+    public Result getAllActivities() {
+        return activityService.getAllActivities();
+    }
+
+    @Operation(summary = "查询活动总数（调试用）", description = "查询数据库中活动总数，用于调试")
+    @GetMapping("/debug/count")
+    public Result getActivityCount() {
+        try {
+            long count = activityService.count();
+            return Result.ok("活动总数: " + count);
+        } catch (Exception e) {
+            return Result.fail("查询活动总数失败: " + e.getMessage());
+        }
+    }
 }
