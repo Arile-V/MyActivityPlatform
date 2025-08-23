@@ -2,6 +2,7 @@ package com.activity.platform.controller;
 
 import com.activity.platform.dto.Result;
 import com.activity.platform.dto.UserRegisterConfirmDTO;
+import com.activity.platform.dto.UserLoginDTO;
 import com.activity.platform.pojo.User;
 import com.activity.platform.service.IOrg2UserService;
 import com.activity.platform.service.IUserService;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "用户管理", description = "用户相关的接口")
@@ -78,13 +80,29 @@ public class UserController {
         return userService.sentCode(username);
     }
 
-    @Operation(summary = "用户登录", description = "使用邮箱和验证码登录")
+    @Operation(summary = "用户登录", description = "使用用户名/邮箱和验证码登录")
     @PostMapping("/login")
     public Result userLogin(
-            @Parameter(description = "用户名/邮箱", required = true, example = "user@example.com")
-            @RequestBody String username,
-            @Parameter(description = "验证码", required = true, example = "123456")
-            @RequestBody String code) {
-        return userService.login(username, code);
+            @Parameter(description = "用户登录信息", required = true)
+            @Valid @RequestBody UserLoginDTO loginDTO) {
+        return userService.login(loginDTO);
+    }
+
+    @Operation(summary = "查询所有用户", description = "获取系统中所有用户列表")
+    @GetMapping("/users")
+    public Result getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @Operation(summary = "条件查询用户", description = "根据邮箱、用户名或学号查询用户")
+    @GetMapping("/users/search")
+    public Result searchUsers(
+            @Parameter(description = "邮箱地址", required = false, example = "user@example.com")
+            @RequestParam(required = false) String email,
+            @Parameter(description = "用户名", required = false, example = "username123")
+            @RequestParam(required = false) String username,
+            @Parameter(description = "学号", required = false, example = "STU2024001")
+            @RequestParam(required = false) String schoolId) {
+        return userService.searchUsers(email, username, schoolId);
     }
 }

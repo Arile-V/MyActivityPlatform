@@ -1,6 +1,7 @@
 package com.activity.platform.service;
 
 import com.activity.platform.dto.Result;
+import com.activity.platform.dto.UserLoginDTO;
 import com.activity.platform.dto.UserRegisterConfirmDTO;
 import com.activity.platform.pojo.User;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -25,4 +26,26 @@ public interface IUserService extends IService<User> {
      * @return 注册结果
      */
     public Result register(UserRegisterConfirmDTO registerDTO);
+    
+    /**
+     * 使用DTO进行用户登录
+     * @param loginDTO 登录请求参数
+     * @return 登录结果
+     */
+    public Result login(UserLoginDTO loginDTO);
+    
+    /**
+     * 查询所有用户列表
+     * @return 用户列表
+     */
+    public Result getAllUsers();
+    
+    /**
+     * 根据条件查询用户
+     * @param email 邮箱
+     * @param username 用户名
+     * @param schoolId 学号
+     * @return 查询结果
+     */
+    public Result searchUsers(String email, String username, String schoolId);
 }
