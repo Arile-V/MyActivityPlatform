@@ -15,6 +15,6 @@ public class User {
     private String email; // 邮箱
     private Timestamp createTime; // 创建时间
     private Long workingHours; // 工作时长
-    private String schoolID; // 学校ID
+    private String schoolId; // 学校ID
     private String name; // 姓名
 }

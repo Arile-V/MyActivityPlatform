@@ -114,7 +114,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return Result.fail("该邮箱已被注册");
         }else if(query().eq("username",user.getUsername()).one()!=null){
             return Result.fail("该用户名已被注册");
-        }else if (query().eq("school_id",user.getSchoolID()).one()!=null){
+        }else if (query().eq("school_id",user.getSchoolId()).one()!=null){
             return Result.fail("该学号已被注册");
         }
         user.setId(snowflakeIdWorker.nextId());
