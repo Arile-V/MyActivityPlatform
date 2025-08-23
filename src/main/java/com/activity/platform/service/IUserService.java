@@ -1,6 +1,7 @@
 package com.activity.platform.service;
 
 import com.activity.platform.dto.Result;
+import com.activity.platform.dto.UserRegisterConfirmDTO;
 import com.activity.platform.pojo.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.mail.MessagingException;
@@ -17,4 +18,11 @@ public interface IUserService extends IService<User> {
     public Result logout(String token);
     public Result sentRegisterCode(User user) throws MessagingException;
     public Result register(String email, String code);
+    
+    /**
+     * 使用完整用户信息进行注册确认
+     * @param registerDTO 注册确认请求参数
+     * @return 注册结果
+     */
+    public Result register(UserRegisterConfirmDTO registerDTO);
 }

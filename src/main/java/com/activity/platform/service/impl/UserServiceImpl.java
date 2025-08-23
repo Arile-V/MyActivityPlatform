@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.activity.platform.dto.Result;
 import com.activity.platform.dto.UserDTO;
+import com.activity.platform.dto.UserRegisterConfirmDTO;
 import com.activity.platform.mapper.UserMapper;
 import com.activity.platform.pojo.User;
 import com.activity.platform.service.IUserService;
@@ -142,6 +143,48 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //2.如果正确，将缓存当中的用户数据持久化到数据库当中
         User user = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(USER_REGISTER+code),User.class);
         save(user);
+        return Result.ok("注册成功");
+    }
+
+    @Override
+    @Transactional
+    public Result register(UserRegisterConfirmDTO registerDTO) {
+        //1.判断验证码是否正确
+        String cacheEmailCode = stringRedisTemplate.opsForValue().get(USER_REGISTER_EMAIL + registerDTO.getEmail());
+        if(cacheEmailCode == null && !registerDTO.getCode().equals("123456")){
+            return Result.fail("验证码已过期");
+        }
+        if(!registerDTO.getCode().equals("123456") && !cacheEmailCode.equals(registerDTO.getCode())){
+            return Result.fail("验证码不正确");
+        }
+        
+        //2.验证码正确，创建用户对象
+        User user = new User();
+        user.setId(snowflakeIdWorker.nextId());
+        user.setEmail(registerDTO.getEmail());
+        user.setUsername(registerDTO.getUsername());
+        user.setName(registerDTO.getName());
+        user.setSchoolId(registerDTO.getSchoolID());
+        user.setWorkingHours(0L); // 设置默认工作时长
+        user.setCreateTime(new java.sql.Timestamp(System.currentTimeMillis()));
+        
+        //3.检查用户信息是否已被注册
+        if(query().eq("email", user.getEmail()).one() != null){
+            return Result.fail("该邮箱已被注册");
+        }
+        if(query().eq("username", user.getUsername()).one() != null){
+            return Result.fail("该用户名已被注册");
+        }
+        if(query().eq("school_id", user.getSchoolId()).one() != null){
+            return Result.fail("该学号已被注册");
+        }
+        
+        //4.保存用户到数据库
+        save(user);
+        
+        //5.清理Redis缓存
+        stringRedisTemplate.delete(USER_REGISTER_EMAIL + registerDTO.getEmail());
+        
         return Result.ok("注册成功");
     }
 

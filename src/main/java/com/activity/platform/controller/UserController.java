@@ -1,6 +1,7 @@
 package com.activity.platform.controller;
 
 import com.activity.platform.dto.Result;
+import com.activity.platform.dto.UserRegisterConfirmDTO;
 import com.activity.platform.pojo.User;
 import com.activity.platform.service.IOrg2UserService;
 import com.activity.platform.service.IUserService;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,14 +40,12 @@ public class UserController {
         return userService.sentRegisterCode(user);
     }
 
-    @Operation(summary = "确认注册", description = "使用邮箱和验证码完成注册")
+    @Operation(summary = "确认注册", description = "使用完整用户信息和验证码完成注册")
     @PostMapping("/register/confirm")
     public Result registerConfirm(
-            @Parameter(description = "邮箱地址", required = true, example = "user@example.com")
-            @RequestBody String email,
-            @Parameter(description = "验证码", required = true, example = "123456")
-            @RequestBody String code) {
-        return userService.register(email, code);
+            @Parameter(description = "用户注册确认信息", required = true)
+            @Valid @RequestBody UserRegisterConfirmDTO registerDTO) {
+        return userService.register(registerDTO);
     }
 
     @Operation(summary = "用户加入组织", description = "当前用户加入组织")
