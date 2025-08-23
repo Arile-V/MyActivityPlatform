@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "活动管理", description = "活动相关的接口")
@@ -62,8 +63,10 @@ public class ActivityController {
     @GetMapping("/list/{pageNum}")
     public Result listActivity(
             @Parameter(description = "页码", required = true, example = "1")
-            @PathVariable Integer pageNum) {
-        return activityService.activityPage(pageNum,10);
+            @PathVariable Integer pageNum,
+            @Parameter(description = "每页大小", required = false, example = "10")
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return activityService.activityPage(pageNum, pageSize);
     }
 
     @Operation(summary = "获取最新活动", description = "获取最新发布的活动列表")

@@ -17,6 +17,8 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations.TypedTuple;
@@ -36,6 +38,9 @@ import static com.activity.platform.util.RedisString.ACTIVITY_HOT;
 
 @Service
 public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> implements IActivityService {
+    
+    private static final Logger log = LoggerFactory.getLogger(ActivityServiceImpl.class);
+
     @Resource
     private final SnowflakeIdWorker idWorker;
     @Resource
@@ -66,10 +71,16 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
     @Override
     public Result activityPage(Integer pageNum, Integer pageSize) {
-        int number = (int)count();
-        List<Activity> activities = query().list().subList(number-(pageNum *pageSize),number-
-                 (pageNum - 1) *pageNum);
-        return Result.ok(activities);
+        try {
+            // 使用MyBatis-Plus的分页功能
+            Page<Activity> page = new Page<>(pageNum, pageSize);
+            Page<Activity> result = page(page);
+            
+            return Result.ok(result);
+        } catch (Exception e) {
+            log.error("分页查询活动失败: ", e);
+            return Result.fail("分页查询失败: " + e.getMessage());
+        }
     }
 
     @Override
