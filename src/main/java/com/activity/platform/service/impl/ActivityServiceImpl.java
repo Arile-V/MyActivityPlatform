@@ -199,11 +199,51 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
+    @Transactional
     public Result deleteActivity(Long activityId) {
-        removeById(activityId);
-        removeFromHotList(activityId);
-        stringRedisTemplate.delete(ACTIVITY + activityId);
-        return Result.ok();
+        try {
+            // 检查活动是否存在
+            Activity activity = getById(activityId);
+            if (activity == null) {
+                return Result.fail("活动不存在");
+            }
+            
+            // 删除活动角色（如果有的话）
+            try {
+                LambdaQueryWrapper<ActivityCharacter> characterQuery = new LambdaQueryWrapper<>();
+                characterQuery.eq(ActivityCharacter::getActivityId, activityId);
+                List<ActivityCharacter> characters = activityCharacterService.list(characterQuery);
+                
+                if (!characters.isEmpty()) {
+                    // 删除所有相关的活动角色
+                    for (ActivityCharacter character : characters) {
+                        activityCharacterService.delete(character.getId());
+                    }
+                    log.info("删除了活动 {} 的 {} 个角色", activityId, characters.size());
+                }
+            } catch (Exception e) {
+                log.warn("删除活动角色时发生异常，继续删除活动: {}", e.getMessage());
+            }
+            
+            // 删除活动
+            boolean removed = removeById(activityId);
+            if (!removed) {
+                return Result.fail("删除活动失败");
+            }
+            
+            // 从热门列表中移除
+            removeFromHotList(activityId);
+            
+            // 清理Redis缓存
+            stringRedisTemplate.delete(ACTIVITY + activityId);
+            
+            log.info("活动 {} 删除成功", activityId);
+            return Result.ok("活动删除成功");
+            
+        } catch (Exception e) {
+            log.error("删除活动 {} 时发生异常: ", activityId, e);
+            return Result.fail("删除活动失败: " + e.getMessage());
+        }
     }
 
     @Override
@@ -212,15 +252,9 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         //将这个ID的活动及其角色改变为激活状态，相关报名全部转为未签到状态等待签到
         Activity activity = getById(activityId);
         activity.setStatus(String.valueOf(START));
-//        LambdaQueryWrapper<Vol> volQuery = new LambdaQueryWrapper<Vol>();
-//        volQuery.select(Vol::getId,Vol::getStatus).eq(Vol::getActivityId,activityId);
-//        List<Vol> volList = volService.list(volQuery);
-//        volList.stream().forEach(vol -> {
-//            vol.setStatus(2);
-//        });
-//        volService.updateBatchById(volList);
         updateById(activity);
-        stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
+        // 使用CacheUtil更新缓存
+        cacheUtil.load(ACTIVITY + activityId, activity);
     }
     @Transactional
     @Override
@@ -228,14 +262,13 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         LambdaUpdateWrapper<Activity> activityLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         activityLambdaUpdateWrapper.set(Activity::getStatus,START).in(Activity::getId,activityIds);
         update(activityLambdaUpdateWrapper);
-//        LambdaUpdateWrapper<Vol> volLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-//        volLambdaUpdateWrapper.set(Vol::getStatus,2).in(Vol::getActivityId,activityIds);
-//        volService.update(volLambdaUpdateWrapper);
+        
         activityIds.stream().forEach(activityId -> {
-            Activity activity = JSONUtil.toBean(stringRedisTemplate.opsForValue().get(ACTIVITY + activityId), Activity.class);
-            activity.setStatus(String.valueOf(START));
-            cacheUtil.load(ACTIVITY + activityId,activity);
-            //stringRedisTemplate.opsForValue().set(ACTIVITY + activityId, JSONUtil.toJsonStr(activity));
+            Activity activity = getById(activityId);
+            if (activity != null) {
+                activity.setStatus(String.valueOf(START));
+                cacheUtil.load(ACTIVITY + activityId, activity);
+            }
         });
     }
 

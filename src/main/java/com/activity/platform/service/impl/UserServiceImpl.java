@@ -269,11 +269,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public Result logout(String token) {
         // 删除用户token
-        if(stringRedisTemplate.delete(USER_TOKEN+token))
+        Boolean deleted = stringRedisTemplate.delete(USER_TOKEN + token);
         // 如果删除成功，返回登出成功
-        return Result.ok("登出成功");
-        // 如果删除失败，返回登录状态已经失效
-        else return Result.fail("登录状态已经失效");
+        if (Boolean.TRUE.equals(deleted)) {
+            return Result.ok("登出成功");
+        } else {
+            // 如果删除失败，返回登录状态已经失效
+            return Result.fail("登录状态已经失效");
+        }
     }
 
     @Override

@@ -39,7 +39,17 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
 
     public void load4Hash(String key, Object object){
         Map<String,Object> objMap = BeanUtil.beanToMap(object);
-        stringRedisTemplate.opsForHash().putAll(key, objMap);
+        Map<String,String> stringMap = RedisTypeConverter.convertToStringMap(objMap);
+        stringRedisTemplate.opsForHash().putAll(key, stringMap);
+    }
+
+    /**
+     * 将Map<String,Object>转换为Map<String,String>，避免Redis类型转换异常
+     * @deprecated 使用 RedisTypeConverter.convertToStringMap() 替代
+     */
+    @Deprecated
+    private Map<String,String> convertToStringMap(Map<String,Object> objMap) {
+        return RedisTypeConverter.convertToStringMap(objMap);
     }
 
     public <T> T getHash(String key, Class<T> clazz) throws NoSuchFieldException, IllegalAccessException {

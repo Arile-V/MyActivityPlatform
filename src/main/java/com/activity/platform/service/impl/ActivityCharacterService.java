@@ -9,6 +9,7 @@ import com.activity.platform.service.IActivityCharacterService;
 import com.activity.platform.service.IVolService;
 import com.activity.platform.util.CacheUtil;
 import com.activity.platform.util.RedisString;
+import com.activity.platform.util.RedisTypeConverter;
 import com.activity.platform.util.SnowflakeIdWorker;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -52,7 +53,8 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
         Long id = idWorker.nextId();
         activityCharacter.setId(id);
         Map<String,Object> characterMap = BeanUtil.beanToMap(activityCharacter);
-        stringRedisTemplate.opsForHash().putAll(SECKILL_CHARACTER+activityCharacter.getId(),characterMap);
+        Map<String,String> stringMap = RedisTypeConverter.convertToStringMap(characterMap);
+        stringRedisTemplate.opsForHash().putAll(SECKILL_CHARACTER+activityCharacter.getId(), stringMap);
         //报名存放处
         stringRedisTemplate.opsForZSet().addIfAbsent(VOL_CHARACTER+activityCharacter.getId(),"tail",0);
         save(activityCharacter);
@@ -62,11 +64,11 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
     @Override
     @Transactional
     public Result delete(Long id) {
-        //丢剩余票数
-        stringRedisTemplate.delete(SECKILL_CHARACTER +id);
-        //移除已经存在的报名
-        stringRedisTemplate.delete(VOL_CHARACTER +id);
-        remove(query().eq("id",id));
+        // 删除剩余票数缓存 - 使用Hash操作删除
+        stringRedisTemplate.delete(SECKILL_CHARACTER + id);
+        // 删除已经存在的报名缓存 - 使用ZSet操作删除
+        stringRedisTemplate.delete(VOL_CHARACTER + id);
+        removeById(id);
         return Result.ok();
     }
 
@@ -76,7 +78,10 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
         if (activityCharacter.getActivityId()==null){
             return Result.fail("活动ID不能为空");
         }
-        stringRedisTemplate.opsForHash().putAll(SECKILL_CHARACTER+activityCharacter.getId(),BeanUtil.beanToMap(activityCharacter));
+        
+        Map<String,Object> characterMap = BeanUtil.beanToMap(activityCharacter);
+        Map<String,String> stringMap = RedisTypeConverter.convertToStringMap(characterMap);
+        stringRedisTemplate.opsForHash().putAll(SECKILL_CHARACTER+activityCharacter.getId(), stringMap);
         updateById(activityCharacter);
         return Result.ok();
     }
@@ -88,5 +93,14 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
         return Result.ok(
                 list(wrapper)
         );
+    }
+
+    /**
+     * 将Map<String,Object>转换为Map<String,String>，避免Redis类型转换异常
+     * @deprecated 使用 RedisTypeConverter.convertToStringMap() 替代
+     */
+    @Deprecated
+    private Map<String,String> convertToStringMap(Map<String,Object> objMap) {
+        return RedisTypeConverter.convertToStringMap(objMap);
     }
 }

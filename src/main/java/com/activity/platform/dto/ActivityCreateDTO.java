@@ -46,17 +46,17 @@ public class ActivityCreateDTO {
     
     // 转换状态值
     private String convertStatus(String frontendStatus) {
-        if (frontendStatus == null) return "pending";
+        if (frontendStatus == null) return "报名中";
         
         switch (frontendStatus) {
             case "报名中":
-                return "pending";
+                return "报名中";
             case "进行中":
-                return "active";
+                return "进行中";
             case "已结束":
-                return "ended";
+                return "已结束";
             default:
-                return "pending";
+                return "报名中";
         }
     }
     

@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import com.activity.platform.dto.ActivityDeleteRequest;
 
 @Tag(name = "活动管理", description = "活动相关的接口")
 @RestController
@@ -88,12 +89,23 @@ public class ActivityController {
     @Operation(summary = "删除活动", description = "根据ID删除活动")
     @PostMapping("/delete")
     public Result deleteActivity(
-            @Parameter(description = "活动ID", required = true, example = "1")
-            @RequestBody Long id) {
-        if (activityService.removeById(id)){
-            return Result.ok();
-        }else
-            return Result.fail("删除失败");
+            @Parameter(description = "活动删除请求", required = true)
+            @RequestBody ActivityDeleteRequest request) {
+        if (request.getId() == null) {
+            return Result.fail("活动ID不能为空");
+        }
+        
+        try {
+            // 调用Service删除活动
+            Result result = activityService.deleteActivity(request.getId());
+            if (result.getSuccess()) {
+                return Result.ok("活动删除成功");
+            } else {
+                return Result.fail("删除失败: " + result.getErrorMsg());
+            }
+        } catch (Exception e) {
+            return Result.fail("删除活动时发生异常: " + e.getMessage());
+        }
     }
 
     @Operation(summary = "获取活动列表", description = "分页查询活动列表")

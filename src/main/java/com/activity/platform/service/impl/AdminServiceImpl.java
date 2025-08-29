@@ -42,7 +42,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
 
     @Override
     public Result logout() {
-        stringRedisTemplate.delete("login:admin:"+ AdminHolder.get().getId());
+        // 删除管理员登录缓存
+        stringRedisTemplate.delete("login:admin:" + AdminHolder.get().getId());
         return Result.ok();
     }
 }

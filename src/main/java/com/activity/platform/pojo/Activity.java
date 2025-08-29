@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.activity.platform.config.StringToLongDeserializer;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -15,6 +18,8 @@ import java.sql.Timestamp;
 public class Activity {
     // 活动ID
     @TableId
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = StringToLongDeserializer.class)
     private Long id;
     // 活动名称
     @TableField("name")
