@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import static com.activity.platform.enums.ActivityStatus.END;
 import static com.activity.platform.enums.ActivityStatus.START;
@@ -123,6 +124,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             Page<Activity> page = new Page<>(pageNum, pageSize);
             Page<Activity> result = page(page);
             
+            // 动态计算每个活动的状态
+            LocalDateTime now = LocalDateTime.now();
+            for (Activity activity : result.getRecords()) {
+                activity.setStatus(calculateActivityStatus(activity, now));
+            }
+            
             log.info("分页查询成功，返回记录数: {}, 总页数: {}", 
                 result.getRecords().size(), result.getPages());
             
@@ -132,6 +139,42 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             return Result.fail("分页查询失败: " + e.getMessage());
         }
     }
+    
+    /**
+     * 根据当前时间动态计算活动状态
+     * @param activity 活动对象
+     * @param now 当前时间
+     * @return 计算后的活动状态
+     */
+    private String calculateActivityStatus(Activity activity, LocalDateTime now) {
+        if (activity.getStartToGetTime() == null || activity.getEndToGetTime() == null || 
+            activity.getStartTime() == null || activity.getEndTime() == null) {
+            return "待审核"; // 如果时间字段为空，返回待审核状态
+        }
+        
+        LocalDateTime startToGetTime = activity.getStartToGetTime().toLocalDateTime();
+        LocalDateTime endToGetTime = activity.getEndToGetTime().toLocalDateTime();
+        LocalDateTime startTime = activity.getStartTime().toLocalDateTime();
+        LocalDateTime endTime = activity.getEndTime().toLocalDateTime();
+        
+        // 判断当前时间在哪个阶段
+        if (now.isBefore(startToGetTime)) {
+            // 当前时间早于报名开始时间
+            return "报名未开始";
+        } else if (now.isBefore(endToGetTime)) {
+            // 当前时间在报名时间范围内
+            return "报名中";
+        } else if (now.isBefore(startTime)) {
+            // 报名已结束，但活动还未开始
+            return "活动未开始";
+        } else if (now.isBefore(endTime)) {
+            // 活动进行中
+            return "活动进行中";
+        } else {
+            // 活动已结束
+            return "活动已结束";
+        }
+    }
 
     @Override
     // 重写hotActivity方法
@@ -139,7 +182,14 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         // 从Redis中获取名为"activity:hot"的有序集合，并按降序获取前5个元素,zSet当中元素是活动缓存的key
         Set<String> set = stringRedisTemplate.opsForZSet().reverseRange(ACTIVITY_HOT, 0, 5);
         // 返回结果
-        return Result.ok(set);
+        List<Activity> list = list();
+        List<Activity> list1 = list.stream().filter(it -> set.contains(ACTIVITY + it.getId())).toList();
+        // 动态计算每个活动的状态
+        LocalDateTime now = LocalDateTime.now();
+        for (Activity activity :list1) {
+            activity.setStatus(calculateActivityStatus(activity, now));
+        }
+        return Result.ok(list1);
     }
 
 // 从热门列表中移除指定活动
@@ -289,6 +339,13 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     public Result getAllActivities() {
         try {
             List<Activity> activities = list();
+            
+            // 动态计算每个活动的状态
+            LocalDateTime now = LocalDateTime.now();
+            for (Activity activity : activities) {
+                activity.setStatus(calculateActivityStatus(activity, now));
+            }
+            
             return Result.ok(activities);
         } catch (Exception e) {
             log.error("获取所有活动失败: ", e);
@@ -362,8 +419,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 }
             }
             
-            // 为每个活动添加热点状态
+            // 动态计算每个活动的状态和热点状态
+            LocalDateTime now = LocalDateTime.now();
             for (Activity activity : activities) {
+                // 计算活动状态
+                activity.setStatus(calculateActivityStatus(activity, now));
+                // 设置热点状态
                 activity.setIsHot(hotActivityIds.contains(activity.getId()));
             }
             
