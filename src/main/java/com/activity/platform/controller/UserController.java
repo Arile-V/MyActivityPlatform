@@ -4,7 +4,7 @@ import com.activity.platform.dto.Result;
 import com.activity.platform.dto.UserRegisterConfirmDTO;
 import com.activity.platform.dto.UserLoginDTO;
 import com.activity.platform.pojo.User;
-import com.activity.platform.service.IOrg2UserService;
+
 import com.activity.platform.service.IUserService;
 import com.activity.platform.util.UserHolder;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,11 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/user")
 public class UserController {
     private final IUserService userService;
-    private final IOrg2UserService org2UserService;
 
-    public UserController(IUserService userService, IOrg2UserService org2UserService) {
+    public UserController(IUserService userService) {
         this.userService = userService;
-        this.org2UserService = org2UserService;
     }
 
     @Operation(summary = "发送注册验证码", description = "发送注册验证码到用户邮箱")
@@ -50,19 +48,9 @@ public class UserController {
         return userService.register(registerDTO);
     }
 
-    @Operation(summary = "用户加入组织", description = "当前用户加入组织")
-    @PostMapping("/user2org")
-    public Result registerUser2Org() {
-        return org2UserService.userJoin(UserHolder.getUser().getId());
-    }
 
-    @Operation(summary = "检查用户状态", description = "检查用户是否属于指定组织")
-    @GetMapping("/org/{id}")
-    public Result checkUser(
-            @Parameter(description = "组织ID", required = true, example = "1")
-            @PathVariable Long id) {
-        return org2UserService.checkUser(id);
-    }
+
+
 
     @Operation(summary = "用户退出登录", description = "用户退出当前登录状态")
     @PostMapping("/logout")
@@ -86,6 +74,14 @@ public class UserController {
             @Parameter(description = "用户登录信息", required = true)
             @Valid @RequestBody UserLoginDTO loginDTO) {
         return userService.login(loginDTO);
+    }
+
+    @Operation(summary = "获取当前用户信息", description = "根据token获取当前登录用户的详细信息")
+    @GetMapping("/info")
+    public Result getUserInfo(
+            @Parameter(description = "登录令牌", required = true)
+            @RequestHeader String token) {
+        return userService.getUserInfo(token);
     }
 
     @Operation(summary = "查询所有用户", description = "获取系统中所有用户列表")

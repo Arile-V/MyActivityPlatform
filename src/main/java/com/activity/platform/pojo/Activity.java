@@ -59,4 +59,8 @@ public class Activity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @JsonDeserialize(using = CustomTimestampDeserializer.class)
     private Timestamp createTime;
+    
+    // 是否为热点活动（非数据库字段，仅用于前端显示）
+    @TableField(exist = false)
+    private Boolean isHot;
 }

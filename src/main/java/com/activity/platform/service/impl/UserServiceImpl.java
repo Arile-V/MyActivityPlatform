@@ -310,4 +310,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    @Override
+    public Result getUserInfo(String token) {
+        try {
+            // 从Redis中获取用户信息
+            String userJson = stringRedisTemplate.opsForValue().get(USER_TOKEN + token);
+            if (userJson == null) {
+                return Result.fail("token已过期或无效");
+            }
+            
+            // 解析用户信息
+            UserDTO userDTO = JSONUtil.toBean(userJson, UserDTO.class);
+            if (userDTO == null) {
+                return Result.fail("用户信息解析失败");
+            }
+            
+            // 从数据库获取最新的用户信息
+            User user = getById(userDTO.getId());
+            if (user == null) {
+                return Result.fail("用户不存在");
+            }
+            
+            // 返回用户信息
+            return Result.ok(user);
+        } catch (Exception e) {
+            log.error("获取用户信息失败: ", e);
+            return Result.fail("获取用户信息失败: " + e.getMessage());
+        }
+    }
+
 }

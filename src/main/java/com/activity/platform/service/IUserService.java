@@ -48,4 +48,11 @@ public interface IUserService extends IService<User> {
      * @return 查询结果
      */
     public Result searchUsers(String email, String username, String schoolId);
+    
+    /**
+     * 根据token获取当前用户信息
+     * @param token 登录令牌
+     * @return 用户信息
+     */
+    public Result getUserInfo(String token);
 }

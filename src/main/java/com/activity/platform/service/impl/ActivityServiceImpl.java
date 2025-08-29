@@ -9,6 +9,7 @@ import com.activity.platform.pojo.ActivityCharacter;
 import com.activity.platform.pojo.plus.Vol;
 import com.activity.platform.service.IActivityService;
 import com.activity.platform.service.IVolService;
+import com.activity.platform.service.IActivityCharacterService;
 import com.activity.platform.util.CacheUtil;
 import com.activity.platform.util.SnowflakeIdWorker;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -30,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.HashSet;
 
 import static com.activity.platform.enums.ActivityStatus.END;
 import static com.activity.platform.enums.ActivityStatus.START;
@@ -47,15 +49,19 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     private final StringRedisTemplate stringRedisTemplate;
     @Resource
     private final CacheUtil cacheUtil;
+    @Resource
+    private final IActivityCharacterService activityCharacterService;
 
 
     public ActivityServiceImpl(
             SnowflakeIdWorker idWorker,
             StringRedisTemplate stringRedisTemplate,
-            CacheUtil cacheUtil) {
+            CacheUtil cacheUtil,
+            IActivityCharacterService activityCharacterService) {
         this.idWorker = idWorker;
         this.stringRedisTemplate = stringRedisTemplate;
         this.cacheUtil = cacheUtil;
+        this.activityCharacterService = activityCharacterService;
     }
 
     @Override
@@ -67,6 +73,36 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         save(activity);
         cacheUtil.load(ACTIVITY + activityId, activity);
         return Result.ok(activityId);
+    }
+
+    @Override
+    @Transactional
+    public Result createActivity(Activity activity, List<ActivityCharacter> characters) {
+        try {
+            // 创建活动
+            Long activityId = idWorker.nextId();
+            activity.setId(activityId);
+            activity.setCreateTime(Timestamp.valueOf(LocalDateTime.now()));
+            save(activity);
+            
+            // 创建活动角色
+            if (characters != null && !characters.isEmpty()) {
+                for (ActivityCharacter character : characters) {
+                    character.setActivityId(activityId);
+                    // 现在字段名已经正确映射，可以直接创建角色
+                    activityCharacterService.create(character);
+                    log.info("创建活动角色成功: {}", character);
+                }
+            }
+            
+            // 缓存活动信息
+            cacheUtil.load(ACTIVITY + activityId, activity);
+            
+            return Result.ok(activityId);
+        } catch (Exception e) {
+            log.error("创建活动失败: ", e);
+            return Result.fail("创建活动失败: " + e.getMessage());
+        }
     }
 
     @Override
@@ -219,22 +255,89 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Override
     public Result getAllActivities() {
         try {
-            log.info("开始查询所有活动");
-            
-            // 查询所有活动
             List<Activity> activities = list();
-            log.info("查询到活动数量: {}", activities.size());
+            return Result.ok(activities);
+        } catch (Exception e) {
+            log.error("获取所有活动失败: ", e);
+            return Result.fail("获取活动列表失败: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Result setHotActivity(Long activityId) {
+        try {
+            // 检查活动是否存在
+            Activity activity = getById(activityId);
+            if (activity == null) {
+                return Result.fail("活动不存在");
+            }
             
-            // 打印每个活动的基本信息
+            // 检查活动是否已过期
+            if (activity.getEndTime() != null && activity.getEndTime().before(Timestamp.valueOf(LocalDateTime.now()))) {
+                return Result.fail("活动已过期，不能设置为热点");
+            }
+            
+            // 添加到热点列表，设置初始分数为1
+            stringRedisTemplate.opsForZSet().add(ACTIVITY_HOT, ACTIVITY + activityId, 1.0);
+            
+            log.info("活动 {} 已设置为热点活动", activityId);
+            return Result.ok("活动已设置为热点活动");
+        } catch (Exception e) {
+            log.error("设置热点活动失败: ", e);
+            return Result.fail("设置热点活动失败: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Result removeHotActivity(Long activityId) {
+        try {
+            // 从热点列表中移除
+            Long removed = stringRedisTemplate.opsForZSet().remove(ACTIVITY_HOT, ACTIVITY + activityId);
+            
+            if (removed != null && removed > 0) {
+                log.info("活动 {} 已从热点列表中移除", activityId);
+                return Result.ok("活动已从热点列表中移除");
+            } else {
+                return Result.fail("活动不在热点列表中");
+            }
+        } catch (Exception e) {
+            log.error("移除热点活动失败: ", e);
+            return Result.fail("移除热点活动失败: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Result getAllActivitiesForHotManage() {
+        try {
+            // 获取所有活动
+            List<Activity> activities = list();
+            
+            // 获取当前热点活动ID列表
+            Set<String> hotActivityKeys = stringRedisTemplate.opsForZSet().range(ACTIVITY_HOT, 0, -1);
+            Set<Long> hotActivityIds = new HashSet<>();
+            
+            if (hotActivityKeys != null) {
+                for (String key : hotActivityKeys) {
+                    if (key.startsWith(ACTIVITY)) {
+                        String idStr = key.substring(ACTIVITY.length());
+                        try {
+                            hotActivityIds.add(Long.parseLong(idStr));
+                        } catch (NumberFormatException e) {
+                            log.warn("无法解析活动ID: {}", idStr);
+                        }
+                    }
+                }
+            }
+            
+            // 为每个活动添加热点状态
             for (Activity activity : activities) {
-                log.info("活动ID: {}, 名称: {}, 创建时间: {}", 
-                    activity.getId(), activity.getName(), activity.getCreateTime());
+                activity.setIsHot(hotActivityIds.contains(activity.getId()));
             }
             
             return Result.ok(activities);
         } catch (Exception e) {
-            log.error("查询所有活动失败: ", e);
-            return Result.fail("查询所有活动失败: " + e.getMessage());
+            log.error("获取活动列表失败: ", e);
+            return Result.fail("获取活动列表失败: " + e.getMessage());
         }
     }
 

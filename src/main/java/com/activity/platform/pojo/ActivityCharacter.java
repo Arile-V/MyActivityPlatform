@@ -1,6 +1,7 @@
 package com.activity.platform.pojo;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 @Data
@@ -10,7 +11,8 @@ public class ActivityCharacter {
     private Long id;
     // 活动ID
     private Long activityId;
-    // 角色名称
+    // 角色名称 - 映射到数据库的character_name字段
+    @TableField("character_name")
     private String name;
     // 角色容量
     private Integer volume;

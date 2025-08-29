@@ -2,6 +2,7 @@ package com.activity.platform.service;
 
 import com.activity.platform.dto.Result;
 import com.activity.platform.pojo.Activity;
+import com.activity.platform.pojo.ActivityCharacter;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
 * */
 public interface IActivityService extends IService<Activity> {
     public Result createActivity(Activity activity);
+    public Result createActivity(Activity activity, List<ActivityCharacter> characters);
     public Result activityPage(Integer pageNum, Integer pageSize);
     public Result hotActivity();
     public Activity getActivityById(Long activityId) throws NoSuchFieldException, IllegalAccessException;
@@ -28,4 +30,24 @@ public interface IActivityService extends IService<Activity> {
      * @return 所有活动列表
      */
     Result getAllActivities();
+    
+    /**
+     * 设置活动为热点活动
+     * @param activityId 活动ID
+     * @return 操作结果
+     */
+    Result setHotActivity(Long activityId);
+    
+    /**
+     * 取消活动热点状态
+     * @param activityId 活动ID
+     * @return 操作结果
+     */
+    Result removeHotActivity(Long activityId);
+    
+    /**
+     * 获取所有活动（用于热点活动管理）
+     * @return 所有活动列表
+     */
+    Result getAllActivitiesForHotManage();
 }
