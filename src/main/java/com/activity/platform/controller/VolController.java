@@ -23,7 +23,7 @@ public class VolController {
     private IVolService volunteerService;
 
     @Operation(summary = "报名", description = "报名")
-    @GetMapping("/get/{activityCharacterId}")
+    @PostMapping("/get/{activityCharacterId}")
     public Result getVolunteer(
             @Parameter(description = "活动角色ID", required = true, example = "1")
             @PathVariable Long activityCharacterId) {
@@ -58,5 +58,13 @@ public class VolController {
             @Parameter(description = "志愿者ID", required = true, example = "1")
             @PathVariable Long id) {
         return volunteerService.info(id);
+    }
+
+    @Operation(summary = "检查用户是否已报名", description = "检查当前用户是否已报名指定活动角色")
+    @GetMapping("/check/{activityCharacterId}")
+    public Result checkUserSignUp(
+            @Parameter(description = "活动角色ID", required = true, example = "1")
+            @PathVariable Long activityCharacterId) {
+        return volunteerService.checkUserSignUp(activityCharacterId);
     }
 }

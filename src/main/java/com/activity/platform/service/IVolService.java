@@ -30,6 +30,9 @@ public interface IVolService extends IService<Vol>{
     // 用户看自己参与过的活动详情
     Result info(Long characterId);
 
+    // 检查用户是否已报名指定活动角色
+    Result checkUserSignUp(Long activityCharacterId);
+
     void start(Long activityId);
     void start(List<Long> activityIds);
 

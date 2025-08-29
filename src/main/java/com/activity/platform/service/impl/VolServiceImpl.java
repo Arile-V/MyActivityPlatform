@@ -218,6 +218,26 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
     }
 
     @Override
+    public Result checkUserSignUp(Long activityCharacterId) {
+        UserDTO user = UserHolder.getUser();
+        if (user == null) {
+            return Result.fail("请先登录");
+        }
+        
+        // 检查Redis中是否有报名记录
+        boolean hasSignedUp = stringRedisTemplate.hasKey("vol:user" + user.getId() + ":character:" + activityCharacterId);
+        
+        // 同时检查数据库中的记录
+        LambdaQueryWrapper<Vol> volLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        volLambdaQueryWrapper.eq(Vol::getUserId, user.getId()).eq(Vol::getActivityId, activityCharacterId);
+        Vol volRecord = getOne(volLambdaQueryWrapper);
+        
+        boolean isSignedUp = hasSignedUp || volRecord != null;
+        
+        return Result.ok(isSignedUp);
+    }
+
+    @Override
     public Result lists() {
         UserDTO user = UserHolder.getUser();
         if(user == null){
