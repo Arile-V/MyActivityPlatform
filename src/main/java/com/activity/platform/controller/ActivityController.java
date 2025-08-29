@@ -35,10 +35,10 @@ public class ActivityController {
             @Parameter(description = "活动信息", required = true)
             @RequestBody ActivityCreateDTO createDTO) {
         try {
-            // 转换DTO为Activity实体
+
             Activity activity = createDTO.toActivity();
             
-            // 处理时间字段转换
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             
             if (createDTO.getStartTime() != null) {
@@ -61,7 +61,7 @@ public class ActivityController {
                 activity.setEndToGetTime(Timestamp.valueOf(endToGetTime));
             }
             
-            // 调用Service创建活动
+
             Result result = activityService.createActivity(activity, createDTO.toActivityCharacters());
             
             if (result.getSuccess()) {
@@ -96,7 +96,6 @@ public class ActivityController {
         }
         
         try {
-            // 调用Service删除活动
             Result result = activityService.deleteActivity(request.getId());
             if (result.getSuccess()) {
                 return Result.ok("活动删除成功");

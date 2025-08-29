@@ -18,9 +18,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * 处理参数验证异常
-     */
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result handleValidationException(MethodArgumentNotValidException e) {
@@ -31,9 +29,7 @@ public class GlobalExceptionHandler {
         return Result.fail("参数验证失败: " + message);
     }
 
-    /**
-     * 处理绑定异常
-     */
+
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result handleBindException(BindException e) {
@@ -44,9 +40,7 @@ public class GlobalExceptionHandler {
         return Result.fail("参数绑定失败: " + message);
     }
 
-    /**
-     * 处理约束违反异常
-     */
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result handleConstraintViolationException(ConstraintViolationException e) {
@@ -57,9 +51,7 @@ public class GlobalExceptionHandler {
         return Result.fail("约束验证失败: " + message);
     }
 
-    /**
-     * 处理其他运行时异常
-     */
+
     @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result handleRuntimeException(RuntimeException e) {
@@ -67,9 +59,7 @@ public class GlobalExceptionHandler {
         return Result.fail("系统内部错误: " + e.getMessage());
     }
 
-    /**
-     * 处理其他异常
-     */
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result handleException(Exception e) {

@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 
 import java.io.IOException;
 
-/**
- * 字符串到Long的反序列化器
- * 用于处理前端传递的字符串ID，避免JavaScript大整数精度丢失问题
- */
+
 public class StringToLongDeserializer extends JsonDeserializer<Long> {
     
     @Override

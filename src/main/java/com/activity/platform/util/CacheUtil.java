@@ -18,20 +18,22 @@ import java.util.function.Function;
 
 @Slf4j
 @Component
-public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻辑过期
+public class CacheUtil {
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
     private final long time = 1000 * 60 * 60;
+    
     public CacheUtil(StringRedisTemplate stringRedisTemplate, RedissonClient redissonClient) {
         this.redissonClient = redissonClient;
         this.stringRedisTemplate = stringRedisTemplate;
     }
-    //逻辑过期缓存，在json或者hash缓存当中加上时间序列来对比和更新
+    
+
     public void load(String key, Object object){
         Map<String,Object> objMap = BeanUtil.beanToMap(object);
         if(object.getClass() == String.class && ((String)object).equals("空对象")){
         }else{
-            objMap.put("expire", System.currentTimeMillis()+time+ RandomUtil.randomLong(0L,600000L));//TODO 过期时间
+            objMap.put("expire", System.currentTimeMillis()+time+ RandomUtil.randomLong(0L,600000L));
         }
         String json = JSONUtil.toJsonStr(objMap);
         stringRedisTemplate.opsForValue().set(key, json);
@@ -43,10 +45,7 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
         stringRedisTemplate.opsForHash().putAll(key, stringMap);
     }
 
-    /**
-     * 将Map<String,Object>转换为Map<String,String>，避免Redis类型转换异常
-     * @deprecated 使用 RedisTypeConverter.convertToStringMap() 替代
-     */
+
     @Deprecated
     private Map<String,String> convertToStringMap(Map<String,Object> objMap) {
         return RedisTypeConverter.convertToStringMap(objMap);
@@ -57,6 +56,7 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
         T data = BeanUtil.mapToBean(entries, clazz, true);
         return data;
     }
+    
     public <T> T getOrExpire(String key, Class<T> clazz, Function<Long,T> queryFunction) throws NoSuchFieldException, IllegalAccessException {
         String isEmpty = stringRedisTemplate.opsForValue().get("empty:"+key);
         if(isEmpty != null && isEmpty.equals("空对象")){
@@ -97,13 +97,7 @@ public class CacheUtil { //用于制作页面缓存等静态缓存，采用逻�
                         });
                     }
                     return data;
-                } catch (IllegalArgumentException e) {
-                    throw new RuntimeException(e);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                } catch (NoSuchFieldException e) {
-                    throw new RuntimeException(e);
-                } catch (SecurityException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 } finally {
                     lock.unlock();

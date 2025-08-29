@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -364,7 +365,7 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
             return Result.fail("用户邮箱不能为空");
         }
         
-        // 通过邮箱查找用户ID
+
         Long userId = getUserIdByEmail(email);
         if (userId == null) {
             return Result.fail("用户不存在，请先注册");
@@ -379,16 +380,48 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
         LambdaQueryWrapper<Activity> activityLambdaQueryWrapper = new LambdaQueryWrapper<>();
         activityLambdaQueryWrapper.in(Activity::getId, volList.stream().map(Vol::getActivityId).collect(Collectors.toList()));
         List<Activity> activityList = activityService.list(activityLambdaQueryWrapper);
-        Map<String,List> resultMap = new HashMap<>();
-        resultMap.put("volList",volList);
-        resultMap.put("activityList",activityList);
+        
+
+        LocalDateTime now = LocalDateTime.now();
+        int completedActivitiesCount = 0;
+        double totalWorkingHours = 0.0;
+        
+        for (Activity activity : activityList) {
+
+            activity.setStatus(activityService.calculateActivityStatus(activity, now));
+            
+
+            if (activity.getStartTime() != null && activity.getEndTime() != null) {
+                try {
+
+                    LocalDateTime startTime = activity.getStartTime().toLocalDateTime();
+                    LocalDateTime endTime = activity.getEndTime().toLocalDateTime();
+                    
+
+                    Duration duration = Duration.between(startTime, endTime);
+                    double hours = duration.toHours() + (duration.toMinutes() % 60) / 60.0;
+                    
+
+                    if ("活动已结束".equals(activity.getStatus())) {
+                        completedActivitiesCount++;
+                        totalWorkingHours += hours;
+                    }
+                } catch (Exception e) {
+                    log.warn("计算活动时长失败: activityId={}, error={}", activity.getId(), e.getMessage());
+                }
+            }
+        }
+        
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put("volList", volList);
+        resultMap.put("activityList", activityList);
+        resultMap.put("completedActivitiesCount", completedActivitiesCount);
+        resultMap.put("totalWorkingHours", Math.round(totalWorkingHours * 100.0) / 100.0);
         return Result.ok(resultMap);
     }
 
     @Override
     public Result info(Long characterId) {
-        // 这个方法需要用户ID参数，但由于我们已经去掉了登录验证
-        // 暂时返回错误信息，或者可以修改接口签名添加email参数
         return Result.fail("此接口需要用户身份验证，请使用其他接口");
     }
 

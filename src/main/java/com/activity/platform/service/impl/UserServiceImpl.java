@@ -53,13 +53,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result sentCode(String loginString) throws MessagingException {
+
         // 生成随机验证码
         String code = EmailCode.randomCode();
         // 根据用户名查询用户
         User user = query().eq("username",loginString).one();
         // 如果用户不存在，则根据邮箱查询用户
         if(user==null){
-            user = query().eq("email",loginString).one();
+            // 清理输入参数，去除双引号和其他不必要的字符
+            if (loginString != null && !loginString.trim().isEmpty()) {
+                String cleanEmail = loginString.replaceAll("[\"\"']", "").trim();
+                log.info("清理后的邮箱: '{}' -> '{}'", loginString, cleanEmail);
+                loginString = cleanEmail;
+                user = query().eq("email",cleanEmail).one();
+            }
             // 如果用户仍然不存在，则返回用户不存在的提示
             if(user == null){
                 return Result.fail("用户不存在");
@@ -319,7 +326,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             // 从Redis中获取用户信息
             String userJson = stringRedisTemplate.opsForValue().get(USER_TOKEN + token);
             if (userJson == null) {
-                return Result.fail("token已过期或无效");
+                return Result.ok();
+                //return Result.fail("token已过期或无效");
             }
             
             // 解析用户信息

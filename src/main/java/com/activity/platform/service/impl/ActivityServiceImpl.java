@@ -80,23 +80,22 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Transactional
     public Result createActivity(Activity activity, List<ActivityCharacter> characters) {
         try {
-            // 创建活动
             Long activityId = idWorker.nextId();
             activity.setId(activityId);
             activity.setCreateTime(Timestamp.valueOf(LocalDateTime.now()));
             save(activity);
             
-            // 创建活动角色
+
             if (characters != null && !characters.isEmpty()) {
                 for (ActivityCharacter character : characters) {
                     character.setActivityId(activityId);
-                    // 现在字段名已经正确映射，可以直接创建角色
+
                     activityCharacterService.create(character);
                     log.info("创建活动角色成功: {}", character);
                 }
             }
             
-            // 缓存活动信息
+
             cacheUtil.load(ACTIVITY + activityId, activity);
             
             return Result.ok(activityId);
@@ -111,7 +110,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         try {
             log.info("开始分页查询活动，页码: {}, 每页大小: {}", pageNum, pageSize);
             
-            // 先查询总数
+
             long total = count();
             log.info("活动总数: {}", total);
             
@@ -120,11 +119,10 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 return Result.ok(new Page<Activity>(pageNum, pageSize));
             }
             
-            // 使用MyBatis-Plus的分页功能
+
             Page<Activity> page = new Page<>(pageNum, pageSize);
             Page<Activity> result = page(page);
             
-            // 动态计算每个活动的状态
             LocalDateTime now = LocalDateTime.now();
             for (Activity activity : result.getRecords()) {
                 activity.setStatus(calculateActivityStatus(activity, now));
@@ -140,16 +138,11 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         }
     }
     
-    /**
-     * 根据当前时间动态计算活动状态
-     * @param activity 活动对象
-     * @param now 当前时间
-     * @return 计算后的活动状态
-     */
-    private String calculateActivityStatus(Activity activity, LocalDateTime now) {
+
+    public String calculateActivityStatus(Activity activity, LocalDateTime now) {
         if (activity.getStartToGetTime() == null || activity.getEndToGetTime() == null || 
             activity.getStartTime() == null || activity.getEndTime() == null) {
-            return "待审核"; // 如果时间字段为空，返回待审核状态
+            return "待审核";
         }
         
         LocalDateTime startToGetTime = activity.getStartToGetTime().toLocalDateTime();
@@ -157,34 +150,26 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         LocalDateTime startTime = activity.getStartTime().toLocalDateTime();
         LocalDateTime endTime = activity.getEndTime().toLocalDateTime();
         
-        // 判断当前时间在哪个阶段
+
         if (now.isBefore(startToGetTime)) {
-            // 当前时间早于报名开始时间
             return "报名未开始";
         } else if (now.isBefore(endToGetTime)) {
-            // 当前时间在报名时间范围内
             return "报名中";
         } else if (now.isBefore(startTime)) {
-            // 报名已结束，但活动还未开始
             return "活动未开始";
         } else if (now.isBefore(endTime)) {
-            // 活动进行中
             return "活动进行中";
         } else {
-            // 活动已结束
             return "活动已结束";
         }
     }
 
     @Override
-    // 重写hotActivity方法
     public Result hotActivity() {
-        // 从Redis中获取名为"activity:hot"的有序集合，并按降序获取前5个元素,zSet当中元素是活动缓存的key
+
         Set<String> set = stringRedisTemplate.opsForZSet().reverseRange(ACTIVITY_HOT, 0, 5);
-        // 返回结果
         List<Activity> list = list();
         List<Activity> list1 = list.stream().filter(it -> set.contains(ACTIVITY + it.getId())).toList();
-        // 动态计算每个活动的状态
         LocalDateTime now = LocalDateTime.now();
         for (Activity activity :list1) {
             activity.setStatus(calculateActivityStatus(activity, now));
@@ -194,24 +179,24 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
 
 // 从热门列表中移除指定活动
     private boolean removeFromHotList(Long activityId){
-        // 如果移除活动成功，则返回false，否则返回true
+
         return Boolean.FALSE
                 .equals(
-                        // 比较移除活动后的返回值是否为0
+
                         Objects.equals(stringRedisTemplate.opsForZSet()
                         .remove(ACTIVITY_HOT, ACTIVITY + activityId), 0L)
                 );
     }
 
     private boolean addOrPlusScore(Long activityID){
-        // 判断是否将活动添加到Redis的有序集合中
+
         if(Boolean.TRUE
                 .equals(stringRedisTemplate.opsForZSet()
                         .addIfAbsent(ACTIVITY_HOT, ACTIVITY + activityID, 0D))){
-            // 如果添加成功，返回true
+
             return Boolean.TRUE;
         }else {
-            // 如果添加失败，判断是否将活动的分数加1
+
             return Boolean.TRUE
                     .equals(
                             Objects.equals(stringRedisTemplate.opsForZSet()
@@ -228,7 +213,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             Timestamp endTime = activity.getEndTime();
             if(endTime.before(Timestamp.valueOf(LocalDateTime.now()))){
                 removeFromHotList(activityId);
-                //过时活动不入缓存
+
                 return activity;
             }
             addOrPlusScore(activityId);
@@ -258,14 +243,14 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 return Result.fail("活动不存在");
             }
             
-            // 删除活动角色（如果有的话）
+
             try {
                 LambdaQueryWrapper<ActivityCharacter> characterQuery = new LambdaQueryWrapper<>();
                 characterQuery.eq(ActivityCharacter::getActivityId, activityId);
                 List<ActivityCharacter> characters = activityCharacterService.list(characterQuery);
                 
                 if (!characters.isEmpty()) {
-                    // 删除所有相关的活动角色
+
                     for (ActivityCharacter character : characters) {
                         activityCharacterService.delete(character.getId());
                     }
@@ -275,16 +260,16 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 log.warn("删除活动角色时发生异常，继续删除活动: {}", e.getMessage());
             }
             
-            // 删除活动
+
             boolean removed = removeById(activityId);
             if (!removed) {
                 return Result.fail("删除活动失败");
             }
             
-            // 从热门列表中移除
+
             removeFromHotList(activityId);
             
-            // 清理Redis缓存
+
             stringRedisTemplate.delete(ACTIVITY + activityId);
             
             log.info("活动 {} 删除成功", activityId);
@@ -299,11 +284,11 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Override
     @Transactional
     public void start(Long activityId) {
-        //将这个ID的活动及其角色改变为激活状态，相关报名全部转为未签到状态等待签到
+
         Activity activity = getById(activityId);
         activity.setStatus(String.valueOf(START));
         updateById(activity);
-        // 使用CacheUtil更新缓存
+
         cacheUtil.load(ACTIVITY + activityId, activity);
     }
     @Transactional
@@ -325,13 +310,13 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Override
     @Transactional
     public void end(Long activityId) {
-        //将这个ID的活动及其角色改变为结束状态
+
         Activity activity = getById(activityId);
         activity.setStatus(String.valueOf(END));
         updateById(activity);
-        // 从热门列表中移除
+
         removeFromHotList(activityId);
-        // 清理缓存
+
         stringRedisTemplate.delete(ACTIVITY + activityId);
     }
 
@@ -340,7 +325,6 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         try {
             List<Activity> activities = list();
             
-            // 动态计算每个活动的状态
             LocalDateTime now = LocalDateTime.now();
             for (Activity activity : activities) {
                 activity.setStatus(calculateActivityStatus(activity, now));
@@ -362,12 +346,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 return Result.fail("活动不存在");
             }
             
-            // 检查活动是否已过期
+
             if (activity.getEndTime() != null && activity.getEndTime().before(Timestamp.valueOf(LocalDateTime.now()))) {
                 return Result.fail("活动已过期，不能设置为热点");
             }
             
-            // 添加到热点列表，设置初始分数为1
+
             stringRedisTemplate.opsForZSet().add(ACTIVITY_HOT, ACTIVITY + activityId, 1.0);
             
             log.info("活动 {} 已设置为热点活动", activityId);
@@ -381,7 +365,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Override
     public Result removeHotActivity(Long activityId) {
         try {
-            // 从热点列表中移除
+
             Long removed = stringRedisTemplate.opsForZSet().remove(ACTIVITY_HOT, ACTIVITY + activityId);
             
             if (removed != null && removed > 0) {
@@ -399,10 +383,10 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     @Override
     public Result getAllActivitiesForHotManage() {
         try {
-            // 获取所有活动
+
             List<Activity> activities = list();
             
-            // 获取当前热点活动ID列表
+
             Set<String> hotActivityKeys = stringRedisTemplate.opsForZSet().range(ACTIVITY_HOT, 0, -1);
             Set<Long> hotActivityIds = new HashSet<>();
             
@@ -419,12 +403,12 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
                 }
             }
             
-            // 动态计算每个活动的状态和热点状态
+
             LocalDateTime now = LocalDateTime.now();
             for (Activity activity : activities) {
-                // 计算活动状态
+
                 activity.setStatus(calculateActivityStatus(activity, now));
-                // 设置热点状态
+
                 activity.setIsHot(hotActivityIds.contains(activity.getId()));
             }
             

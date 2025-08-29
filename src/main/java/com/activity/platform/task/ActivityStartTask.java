@@ -41,12 +41,12 @@ public class ActivityStartTask {
             activityService.start(activities.stream().map(Activity::getId).collect(Collectors.toList()));
             volService.start(activities.stream().map(Activity::getId).collect(Collectors.toList()));
         }
-        //还有邮件发送或者站内推送
+
     }
 
     @Scheduled(cron = "0 * * * * ?")
     public void badVol() {
-        //将签到状态为未签到且签到时间大于活动结束时间的志愿者设置为不良志愿者
+
         LambdaQueryWrapper<Activity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.select(Activity::getId).eq(Activity::getStatus, ActivityStatus.END.name());
         List<Activity> list = activityService.list(lambdaQueryWrapper);
@@ -55,7 +55,7 @@ public class ActivityStartTask {
         LambdaUpdateWrapper<Activity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.set(Activity::getStatus, ActivityStatus.END.name())
                 .eq(Activity::getStatus, "1")
-                .lt(Activity::getEndTime, new Timestamp(System.currentTimeMillis())); // 修复这里
+                .lt(Activity::getEndTime, new Timestamp(System.currentTimeMillis()));
 
         activityService.update(lambdaUpdateWrapper);
     }

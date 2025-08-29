@@ -8,6 +8,6 @@ public enum ActivityStatus {
     String myStatus;
 
     ActivityStatus(String status) {
-        status = status;
+        this.myStatus = status;
     }
 }

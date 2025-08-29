@@ -5,18 +5,15 @@ import com.activity.platform.pojo.Activity;
 import com.activity.platform.pojo.ActivityCharacter;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-/*
-设计思路：
-    活动发布，活动列表，活动详情，活动修改，活动删除
-    活动列表分页，活动列表按照时间排序，活动列表按照热度排序
-    活动详情包括活动基本信息，活动报名人数，活动报名状态，活动报名，活动取消报名，活动报名人数限制
-* */
+
 public interface IActivityService extends IService<Activity> {
     public Result createActivity(Activity activity);
     public Result createActivity(Activity activity, List<ActivityCharacter> characters);
     public Result activityPage(Integer pageNum, Integer pageSize);
+    public String calculateActivityStatus(Activity activity, LocalDateTime now);
     public Result hotActivity();
     public Activity getActivityById(Long activityId) throws NoSuchFieldException, IllegalAccessException;
     public Result updateActivity(Activity activity);
@@ -25,29 +22,15 @@ public interface IActivityService extends IService<Activity> {
     public void start(List<Long> activityIds);
     public void end(Long activityId);
     
-    /**
-     * 查询所有活动（用于调试）
-     * @return 所有活动列表
-     */
+
     Result getAllActivities();
     
-    /**
-     * 设置活动为热点活动
-     * @param activityId 活动ID
-     * @return 操作结果
-     */
+
     Result setHotActivity(Long activityId);
     
-    /**
-     * 取消活动热点状态
-     * @param activityId 活动ID
-     * @return 操作结果
-     */
+
     Result removeHotActivity(Long activityId);
     
-    /**
-     * 获取所有活动（用于热点活动管理）
-     * @return 所有活动列表
-     */
+
     Result getAllActivitiesForHotManage();
 }

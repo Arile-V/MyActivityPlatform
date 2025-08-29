@@ -5,9 +5,7 @@ import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
 
-/**
- * 活动删除请求DTO
- */
+
 @Data
 @Schema(description = "活动删除请求")
 public class ActivityDeleteRequest {

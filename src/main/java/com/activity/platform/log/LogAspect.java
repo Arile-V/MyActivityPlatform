@@ -25,9 +25,9 @@ public class LogAspect {
     public void afterReturning(JoinPoint joinPoint, Object jsonResult) {
         handleLog(joinPoint,jsonResult);
     }
+    
     protected void handleLog(final JoinPoint joinPoint,Object jsonResult) {
         try{
-            //UserDTO user = UserHolder.getUser();
             MyLog logs = new MyLog();
             String method = joinPoint.getTarget().getClass().getName()+
                     "."

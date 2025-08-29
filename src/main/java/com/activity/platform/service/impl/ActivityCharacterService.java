@@ -95,10 +95,7 @@ public class ActivityCharacterService extends ServiceImpl<ActivityCharacterMappe
         );
     }
 
-    /**
-     * 将Map<String,Object>转换为Map<String,String>，避免Redis类型转换异常
-     * @deprecated 使用 RedisTypeConverter.convertToStringMap() 替代
-     */
+
     @Deprecated
     private Map<String,String> convertToStringMap(Map<String,Object> objMap) {
         return RedisTypeConverter.convertToStringMap(objMap);
