@@ -148,17 +148,47 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
             return Result.fail("您已经报名过这个活动的其他角色，每个用户只能报名一个角色");
         }
         
-        Vol vol = new Vol();
-        vol.setId(idWorker.nextId());
-        vol.setUserId(userId);
-        vol.setCharacterId(characterId);
-        vol.setActivityId(activityId);
-        vol.setStatus(0);
-        
-        // 保存到数据库
-        save(vol);
-        
-        return Result.ok(vol.getId());
+        // 直接保存到数据库
+        try {
+            Vol vol = new Vol();
+            vol.setId(idWorker.nextId());
+            vol.setUserId(userId);
+            vol.setCharacterId(characterId);
+            vol.setActivityId(activityId);
+            vol.setStatus(0);
+            
+            // 保存报名记录到数据库
+            save(vol);
+            
+            // 更新角色容量 -1
+            try {
+                // 使用原子操作更新容量，确保不会出现负数
+                LambdaUpdateWrapper<ActivityCharacter> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(ActivityCharacter::getId, characterId)
+                           .ge(ActivityCharacter::getVolume, 1) // 确保容量大于等于1
+                           .setSql("volume = volume - 1");
+                boolean updateSuccess = activityCharacterService.update(updateWrapper);
+                
+                if (!updateSuccess) {
+                    log.warn("更新角色容量失败: characterId={}, 可能容量不足", characterId);
+                    // 如果更新失败，回滚报名记录
+                    removeById(vol.getId());
+                    return Result.fail("角色容量不足，报名失败");
+                } else {
+                    log.info("成功更新角色容量: characterId={}", characterId);
+                }
+            } catch (Exception e) {
+                log.error("更新角色容量时发生异常: characterId={}", characterId, e);
+                // 如果更新失败，回滚报名记录
+                removeById(vol.getId());
+                return Result.fail("报名失败，请重试");
+            }
+            
+            return Result.ok(vol.getId());
+        } catch (Exception e) {
+            log.error("保存报名记录失败: characterId={}, userId={}", characterId, userId, e);
+            return Result.fail("报名失败，请重试");
+        }
     }
     
     // 通过邮箱查找用户ID
@@ -238,8 +268,33 @@ public class VolServiceImpl extends ServiceImpl<VolMapper, Vol> implements IVolS
         if(result == 0){
             return Result.fail("非法请求");
         }
-        remove(volLambdaQueryWrapper);
-        return Result.ok("退出成功");
+        // 直接从数据库删除报名记录
+        try {
+            remove(volLambdaQueryWrapper);
+            
+            // 恢复角色容量 +1
+            try {
+                LambdaUpdateWrapper<ActivityCharacter> updateWrapper = new LambdaUpdateWrapper<>();
+                updateWrapper.eq(ActivityCharacter::getId, characterId)
+                           .setSql("volume = volume + 1");
+                boolean updateSuccess = activityCharacterService.update(updateWrapper);
+                
+                if (!updateSuccess) {
+                    log.warn("恢复角色容量失败: characterId={}", characterId);
+                    // 注意：这里不抛出异常，因为退出报名已经成功，只是容量恢复失败
+                } else {
+                    log.info("成功恢复角色容量: characterId={}", characterId);
+                }
+            } catch (Exception e) {
+                log.error("恢复角色容量时发生异常: characterId={}", characterId, e);
+                // 注意：这里不抛出异常，因为退出报名已经成功，只是容量恢复失败
+            }
+            
+            return Result.ok("退出成功");
+        } catch (Exception e) {
+            log.error("退出报名失败: characterId={}, userId={}", characterId, userId, e);
+            return Result.fail("退出失败，请重试");
+        }
     }
 
     @Override
